@@ -50,8 +50,8 @@ struct Wave
 
 std::vector<double> wavesToSignal(const std::vector<Wave>& waves, uint32_t sampling)
 {
-	std::vector<double> out(sampling, 0.0);
-	//for (double& f : out) { f = 0.0f; }
+	std::vector<double> out(sampling);
+	for (double& f : out) { f = 0.0f; }
 
 	for (const Wave& wv : waves)
 	{

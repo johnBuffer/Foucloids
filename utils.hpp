@@ -7,11 +7,18 @@ double computeIntegral(const std::vector<double>& signal, const std::vector<doub
 {
 	double sum = 0.0;
 
+	double fact = 0.0;
+	for (const double& d : distances)
+	{
+		fact += d;
+	}
+
+	fact = 2.0*PI / fact;
+
 	uint32_t i(0);
 	for (double f : signal)
 	{
-		sum += f * distances[i];
-		++i;
+		sum += f * fact * distances[i++];
 	}
 
 	return sum;

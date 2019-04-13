@@ -79,7 +79,7 @@ int main()
 		}
 
 		uint32_t signal_samples = signal_x.size();
-		//std::cout << signal_samples << std::endl;
+		std::cout << signal_samples << std::endl;
 		sf::VertexArray in_va(sf::LinesStrip, signal_samples + 1);
 		if (signal_samples)
 		{
@@ -88,6 +88,16 @@ int main()
 				in_va[i].position = sf::Vector2f(signal_x[i], signal_y[i]);
 			}
 			in_va[signal_samples].position = sf::Vector2f(signal_x[0], signal_y[0]);
+		}
+
+		// Create out_va
+		sf::VertexArray x_va(sf::LinesStrip, signal_samples);
+		double x_x = 0.0;
+		for (uint32_t i(0); i < signal_samples; ++i)
+		{
+			x_x += distances[i];
+			x_va[i].position = sf::Vector2f(x_x, signal_x[i]*0.5);
+			x_va[i].color = sf::Color::Red;
 		}
 
 		terms_x.clear();
@@ -110,21 +120,21 @@ int main()
 			double x = out_x[i];
 			double y = out_y[i];
 
-			if (!i)
-				std::cout << x << std::endl;
-
-			out_va[i].position = sf::Vector2f(i, x*0.001);
+			out_va[i].position = sf::Vector2f(y * 0.5, x * 0.5);
 			out_va[i].color = sf::Color::Green;
 		}
 
-		sf::Transform tf;
-		tf.translate(win_width * 0.5, win_height * 0.5);
+		sf::Transform tf_in;
+		tf_in.translate(win_width * 0.5, win_height * 0.5);
+
+		sf::Transform tf_out;
+		tf_out.translate(0, win_height * 0.5);
+
 
 		window.clear();
 
-		window.draw(in_va, tf);
-
-		window.draw(out_va, tf);
+		window.draw(in_va, tf_in);
+		window.draw(out_va, tf_in);
 		
 		window.display();
 	}
