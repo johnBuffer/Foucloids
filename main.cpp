@@ -1,11 +1,11 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <vector>
-#include <complex>
 #include <iostream>
 #include <dynamic_blur.hpp>
 #include "signal_wave.hpp"
 #include "complex_wave.hpp"
+#include "debug_visu.hpp"
 
 int main()
 {
@@ -25,16 +25,14 @@ int main()
 	{
 		double da = 2.0*PI / 1000.0;
 		double angle = i * da;
-		double x = r * cos(angle);
-		double y = rand() % 10 - 5 + r * sin(angle);
+		double x = rand()%100 - 50 + 1.2 * r * cos(angle);
+		double y = 1.5 * r * sin(angle);
 
 		signal_x.push_back(x);
 		signal_y.push_back(y);
 	}
 
 	distances = computeDistances(signal_x, signal_y);
-
-	std::cout << "Distance tot : " << sum(distances) << std::endl;
 
 	int32_t num_terms(1);
 
@@ -69,11 +67,11 @@ int main()
 			{
 				if (event.key.code == sf::Keyboard::A)
 				{
-					num_terms--;
+					num_terms-=10;
 				}
 				else if (event.key.code == sf::Keyboard::E)
 				{
-					num_terms++;
+					num_terms+=10;
 				}
 				else if (event.key.code == sf::Keyboard::R)
 				{
@@ -83,24 +81,38 @@ int main()
 			}
 		}
 
-		/*if (clic)
+		if (clic)
 		{
-			double vx = last_point.x - current_mouse_pos.x;
-			double vy = last_point.y - current_mouse_pos.y;
+			double vx = current_mouse_pos.x - last_point.x;
+			double vy = current_mouse_pos.y - last_point.y;
 			double distance(sqrt(vx*vx + vy*vy));
 
 			if (distance > 1.0)
 			{
-				double x = current_mouse_pos.x - win_width * 0.5;
-				double y = current_mouse_pos.y - win_height * 0.5;
+				vx /= distance;
+				vy /= distance;
+				
+				double progress(0.0);
+				const double d_dist(1.0);
+				while (progress + d_dist < distance)
+				{
+					progress += d_dist;
 
-				signal_x.push_back(x);
-				signal_y.push_back(-y);
-				distances.push_back(distance);
+					double x = last_point.x + vx * progress - win_width  * 0.5;
+					double y = last_point.y + vy * progress - win_height * 0.5;
+
+					signal_x.push_back( x);
+					signal_y.push_back(-y);
+					distances.push_back(d_dist);
+				}
+
+				signal_x.push_back(  current_mouse_pos.x - win_width  * 0.5);
+				signal_y.push_back(-(current_mouse_pos.y - win_height * 0.5));
+				distances.push_back(distance - progress);
 
 				last_point = current_mouse_pos;
 			}
-		}*/
+		}
 
 		uint32_t signal_samples = signal_x.size();
 		std::cout << signal_samples << std::endl;
@@ -117,15 +129,7 @@ int main()
 		uint32_t out_sampling(std::min(signal_samples, out_signal_sampling));
 
 		// Create out_va
-		sf::VertexArray x_va(sf::LinesStrip, signal_samples);
-		double x_x = 0.0;
-		double x_fact = win_width / sum(distances);
-		for (uint32_t i(0); i < signal_samples; ++i)
-		{
-			x_x += distances[i];
-			x_va[i].position = sf::Vector2f(x_x * x_fact, signal_y[i]);
-			x_va[i].color = sf::Color::Red;
-		}
+		sf::VertexArray x_va = generateInVa(signal_x, distances, win_width);
 
 		terms_x.clear();
 		terms_y.clear();
@@ -141,30 +145,21 @@ int main()
 		auto out_y = wavesToSignal(terms_y, out_sampling);
 
 		// Create out_va
-		sf::VertexArray out_va(sf::LinesStrip, out_sampling);
-		double out_x_fact = win_width / double(out_sampling);
-		for (uint32_t i(0); i< out_sampling; ++i)
-		{
-			double x = out_x[i];
-			double y = out_y[i];
+		sf::VertexArray debug_out_va = generateDebugOutVa(out_x, win_width);
+		sf::VertexArray out_va = generateOutVa(out_x, out_y, win_width);
 
-			out_va[i].position = sf::Vector2f(i * out_x_fact, y);
-			out_va[i].color = sf::Color::Green;
-		}
-
+		// Transforms
 		sf::Transform tf_in;
 		tf_in.translate(win_width * 0.5, win_height * 0.5);
-
 		sf::Transform tf_out;
 		tf_out.translate(0, win_height * 0.5);
 
-
+		// Draw
 		window.clear();
 
 		window.draw(in_va, tf_in);
-		
 		window.draw(x_va, tf_out);
-		window.draw(out_va, tf_out);
+		window.draw(out_va, tf_in);
 		
 		window.display();
 	}

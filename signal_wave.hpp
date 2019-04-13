@@ -20,21 +20,20 @@ struct Wave
 			std::vector<double> processed_in_a;
 			std::vector<double> processed_in_b;
 
-			const double dist_tot_inv = 1.0 / sum(dists);
+			const double scale_factor = 2.0*PI / sum(dists);
 
+			double x(0.0);
 			uint32_t i(0);
 			for (double f : in)
 			{
-				const double ratio = dists[i] * dist_tot_inv;
-				const double sample_width = 2.0 * PI * ratio;
-
-				double t = i * sample_width;
+				double t = x;
 				double val_a = f * cos(k*t);
 				double val_b = f * sin(k*t);
 
 				processed_in_a.push_back(val_a);
 				processed_in_b.push_back(val_b);
 
+				x += dists[i] * scale_factor;
 				++i;
 			}
 
