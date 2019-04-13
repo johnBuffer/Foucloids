@@ -47,5 +47,32 @@ const std::vector<double> computeDistances(const std::vector<double>& x, const s
 	return dists;
 }
 
+void join(double x1, double y1, double x2, double y2, std::vector<double>& in_x, std::vector<double>& in_y, std::vector<double>& dists, double step)
+{
+	double vx = x2 - x1;
+	double vy = y2 - y1;
+	double distance(sqrt(vx*vx + vy*vy));
+
+	vx /= distance;
+	vy /= distance;
+
+	double progress(0.0);
+	while (progress + step < distance)
+	{
+		progress += step;
+
+		double x = x1 + vx * progress;
+		double y = y1 + vy * progress;
+
+		in_x.push_back(x);
+		in_y.push_back(y);
+		dists.push_back(step);
+	}
+
+	in_x.push_back(x2);
+	in_y.push_back(y2);
+	dists.push_back(distance - progress);
+}
+
 
 

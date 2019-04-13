@@ -56,7 +56,7 @@ std::vector<double> wavesToSignal(const std::vector<Wave>& waves, uint32_t sampl
 
 	for (const Wave& wv : waves)
 	{
-		double sign_space = 2.0*PI / double(sampling);
+		double sign_space = 2.0*PI / double(sampling + 1);
 		for (uint32_t i(0); i < sampling; ++i)
 		{
 			out[i] += wv.a * cos(i * sign_space * wv.k);

@@ -12,29 +12,15 @@ int main()
 	const uint32_t win_width = 1000;
 	const uint32_t win_height = 500;
 
-	sf::RenderWindow window(sf::VideoMode(1000, 500), "Sign", sf::Style::Default);
-	window.setVerticalSyncEnabled(true);
-	//window.setFramerateLimit(60);
+	sf::RenderWindow window(sf::VideoMode(1000, 2*win_height), "Octave", sf::Style::Default);
+	window.setVerticalSyncEnabled(false);
+	window.setFramerateLimit(60);
 
 	std::vector<double> signal_x;
 	std::vector<double> signal_y;
 	std::vector<double> distances;
 
-	double r = 150.0;
-	for (int32_t i(0); i < 1000; ++i)
-	{
-		double da = 2.0*PI / 1000.0;
-		double angle = i * da;
-		double x = rand()%100 - 50 + 1.2 * r * cos(angle);
-		double y = 1.5 * r * sin(angle);
-
-		signal_x.push_back(x);
-		signal_y.push_back(y);
-	}
-
-	distances = computeDistances(signal_x, signal_y);
-
-	int32_t num_terms(1);
+	int32_t num_terms(0);
 
 	std::vector<Wave> terms_x;
 	std::vector<Wave> terms_y;
@@ -43,6 +29,14 @@ int main()
 
 	bool clic = false;
 	sf::Vector2i last_point(0, 0);
+
+	sf::RectangleShape top_background(sf::Vector2f(win_width, win_height));
+	sf::RectangleShape bottom_background(sf::Vector2f(win_width, win_height));
+
+	top_background.setFillColor(sf::Color(0, 0, 0));
+	bottom_background.setFillColor(sf::Color(50, 50, 50));
+
+	bottom_background.setPosition(0, win_height);
 
 	while (window.isOpen())
 	{
@@ -62,21 +56,29 @@ int main()
 			else if (event.type == sf::Event::MouseButtonReleased)
 			{
 				clic = false;
+				double x1 = current_mouse_pos.x - win_width * 0.5;
+				double y1 = current_mouse_pos.y - win_height * 0.5;
+
+				double x2 = signal_x[0];
+				double y2 = signal_y[0];
+
+				join(x1, -y1, x2, y2, signal_x, signal_y, distances, 1.0);
 			}
 			else if (event.type == sf::Event::KeyReleased)
 			{
 				if (event.key.code == sf::Keyboard::A)
 				{
-					num_terms-=10;
+					num_terms-=1;
 				}
 				else if (event.key.code == sf::Keyboard::E)
 				{
-					num_terms+=10;
+					num_terms+=1;
 				}
 				else if (event.key.code == sf::Keyboard::R)
 				{
 					signal_x.clear();
 					signal_y.clear();
+					distances.clear();
 				}
 			}
 		}
@@ -89,33 +91,20 @@ int main()
 
 			if (distance > 1.0)
 			{
-				vx /= distance;
-				vy /= distance;
-				
-				double progress(0.0);
-				const double d_dist(1.0);
-				while (progress + d_dist < distance)
-				{
-					progress += d_dist;
+				double x1 = last_point.x - win_width * 0.5;
+				double y1 = last_point.y - win_height * 0.5;
 
-					double x = last_point.x + vx * progress - win_width  * 0.5;
-					double y = last_point.y + vy * progress - win_height * 0.5;
+				double x2 = current_mouse_pos.x - win_width * 0.5;
+				double y2 = current_mouse_pos.y - win_height * 0.5;
 
-					signal_x.push_back( x);
-					signal_y.push_back(-y);
-					distances.push_back(d_dist);
-				}
-
-				signal_x.push_back(  current_mouse_pos.x - win_width  * 0.5);
-				signal_y.push_back(-(current_mouse_pos.y - win_height * 0.5));
-				distances.push_back(distance - progress);
-
+				join(x1, -y1, x2, -y2, signal_x, signal_y, distances, 1.0);
+	
 				last_point = current_mouse_pos;
 			}
+
 		}
 
 		uint32_t signal_samples = signal_x.size();
-		std::cout << signal_samples << std::endl;
 		sf::VertexArray in_va(sf::LinesStrip, signal_samples + 1);
 		if (signal_samples)
 		{
@@ -126,14 +115,15 @@ int main()
 			in_va[signal_samples].position = sf::Vector2f(signal_x[0], -signal_y[0]);
 		}
 
-		uint32_t out_sampling(std::min(signal_samples, out_signal_sampling));
+		uint32_t out_sampling(std::min(signal_samples, 1024U));
 
 		// Create out_va
-		sf::VertexArray x_va = generateInVa(signal_x, distances, win_width);
+		sf::VertexArray x_va = generateInVa(signal_y, distances, win_width);
 
 		terms_x.clear();
 		terms_y.clear();
-		num_terms = num_terms < 1 ? 1 : num_terms;
+		num_terms = num_terms < 0 ? 0 : num_terms;
+		std::cout << "Harmonics: " << num_terms << std::endl;
 		for (uint32_t i(0); i < num_terms; ++i)
 		{
 			terms_x.emplace_back(signal_x, distances, i);
@@ -145,21 +135,29 @@ int main()
 		auto out_y = wavesToSignal(terms_y, out_sampling);
 
 		// Create out_va
-		sf::VertexArray debug_out_va = generateDebugOutVa(out_x, win_width);
+		sf::VertexArray debug_out_va_x = generateDebugOutVa(out_x, win_width, sf::Color::Cyan);
+		sf::VertexArray debug_out_va_y = generateDebugOutVa(out_y, win_width, sf::Color::Yellow);
+
 		sf::VertexArray out_va = generateOutVa(out_x, out_y, win_width);
 
 		// Transforms
 		sf::Transform tf_in;
 		tf_in.translate(win_width * 0.5, win_height * 0.5);
 		sf::Transform tf_out;
-		tf_out.translate(0, win_height * 0.5);
+		tf_out.translate(win_width * 0.5, win_height * 1.5);
 
 		// Draw
 		window.clear();
 
+		window.draw(top_background);
 		window.draw(in_va, tf_in);
-		window.draw(x_va, tf_out);
-		window.draw(out_va, tf_in);
+		
+		window.draw(bottom_background);
+		window.draw(out_va, tf_out);
+
+		/*window.draw(x_va, tf_out);
+		window.draw(debug_out_va_x, tf_out);
+		window.draw(debug_out_va_y, tf_out);*/
 		
 		window.display();
 	}
