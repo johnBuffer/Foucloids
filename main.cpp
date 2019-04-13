@@ -16,6 +16,10 @@ int main()
 	window.setVerticalSyncEnabled(true);
 
 	std::vector<double> signal_x(win_width);
+	for (uint32_t i(0); i < win_width; ++i)
+	{
+		signal_x[i] = rand() % 25 - 12 + 200*cos(i * 4*PI / double(win_width));
+	}
 
 	int32_t num_terms(1);
 
