@@ -20,6 +20,22 @@ int main()
 	std::vector<double> signal_y;
 	std::vector<double> distances;
 
+	double r = 150.0;
+	for (int32_t i(0); i < 1000; ++i)
+	{
+		double da = 2.0*PI / 1000.0;
+		double angle = i * da;
+		double x = r * cos(angle);
+		double y = rand() % 10 - 5 + r * sin(angle);
+
+		signal_x.push_back(x);
+		signal_y.push_back(y);
+	}
+
+	distances = computeDistances(signal_x, signal_y);
+
+	std::cout << "Distance tot : " << sum(distances) << std::endl;
+
 	int32_t num_terms(1);
 
 	std::vector<Wave> terms_x;
@@ -59,24 +75,32 @@ int main()
 				{
 					num_terms++;
 				}
+				else if (event.key.code == sf::Keyboard::R)
+				{
+					signal_x.clear();
+					signal_y.clear();
+				}
 			}
 		}
 
-		if (clic)
+		/*if (clic)
 		{
-			float vx = last_point.x - current_mouse_pos.x;
-			float vy = last_point.y - current_mouse_pos.y;
-
+			double vx = last_point.x - current_mouse_pos.x;
+			double vy = last_point.y - current_mouse_pos.y;
 			double distance(sqrt(vx*vx + vy*vy));
+
 			if (distance > 1.0)
 			{
-				signal_x.push_back(current_mouse_pos.x - win_width * 0.5f);
-				signal_y.push_back(current_mouse_pos.y - win_height * 0.5f);
+				double x = current_mouse_pos.x - win_width * 0.5;
+				double y = current_mouse_pos.y - win_height * 0.5;
+
+				signal_x.push_back(x);
+				signal_y.push_back(-y);
 				distances.push_back(distance);
 
 				last_point = current_mouse_pos;
 			}
-		}
+		}*/
 
 		uint32_t signal_samples = signal_x.size();
 		std::cout << signal_samples << std::endl;
@@ -85,18 +109,21 @@ int main()
 		{
 			for (uint32_t i(0); i< signal_samples; ++i)
 			{
-				in_va[i].position = sf::Vector2f(signal_x[i], signal_y[i]);
+				in_va[i].position = sf::Vector2f(signal_x[i], -signal_y[i]);
 			}
-			in_va[signal_samples].position = sf::Vector2f(signal_x[0], signal_y[0]);
+			in_va[signal_samples].position = sf::Vector2f(signal_x[0], -signal_y[0]);
 		}
+
+		uint32_t out_sampling(std::min(signal_samples, out_signal_sampling));
 
 		// Create out_va
 		sf::VertexArray x_va(sf::LinesStrip, signal_samples);
 		double x_x = 0.0;
+		double x_fact = win_width / sum(distances);
 		for (uint32_t i(0); i < signal_samples; ++i)
 		{
 			x_x += distances[i];
-			x_va[i].position = sf::Vector2f(x_x, signal_x[i]*0.5);
+			x_va[i].position = sf::Vector2f(x_x * x_fact, signal_y[i]);
 			x_va[i].color = sf::Color::Red;
 		}
 
@@ -110,17 +137,18 @@ int main()
 		}
 
 		// Compute signal
-		auto out_x = wavesToSignal(terms_x, out_signal_sampling);
-		auto out_y = wavesToSignal(terms_y, out_signal_sampling);
+		auto out_x = wavesToSignal(terms_x, out_sampling);
+		auto out_y = wavesToSignal(terms_y, out_sampling);
 
 		// Create out_va
-		sf::VertexArray out_va(sf::LinesStrip, out_signal_sampling);
-		for (uint32_t i(0); i<out_signal_sampling; ++i)
+		sf::VertexArray out_va(sf::LinesStrip, out_sampling);
+		double out_x_fact = win_width / double(out_sampling);
+		for (uint32_t i(0); i< out_sampling; ++i)
 		{
 			double x = out_x[i];
 			double y = out_y[i];
 
-			out_va[i].position = sf::Vector2f(y * 0.5, x * 0.5);
+			out_va[i].position = sf::Vector2f(i * out_x_fact, y);
 			out_va[i].color = sf::Color::Green;
 		}
 
@@ -134,7 +162,9 @@ int main()
 		window.clear();
 
 		window.draw(in_va, tf_in);
-		window.draw(out_va, tf_in);
+		
+		window.draw(x_va, tf_out);
+		window.draw(out_va, tf_out);
 		
 		window.display();
 	}

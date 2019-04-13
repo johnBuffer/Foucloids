@@ -16,19 +16,21 @@ struct Wave
 		{
 			a = 1.0 / (2.0 * PI) * computeIntegral(in, dists);
 			b = 0;
-		}
-		else
-		{
-			double sample_width = 2.0 * PI / double(in.size());
+		} else {
 			std::vector<double> processed_in_a;
 			std::vector<double> processed_in_b;
+
+			const double dist_tot_inv = 1.0 / sum(dists);
 
 			uint32_t i(0);
 			for (double f : in)
 			{
+				const double ratio = dists[i] * dist_tot_inv;
+				const double sample_width = 2.0 * PI * ratio;
+
 				double t = i * sample_width;
 				double val_a = f * cos(k*t);
-				double val_b = f * cos(k*t + 0.5 * PI);
+				double val_b = f * sin(k*t);
 
 				processed_in_a.push_back(val_a);
 				processed_in_b.push_back(val_b);
@@ -59,7 +61,7 @@ std::vector<double> wavesToSignal(const std::vector<Wave>& waves, uint32_t sampl
 		for (uint32_t i(0); i < sampling; ++i)
 		{
 			out[i] += wv.a * cos(i * sign_space * wv.k);
-			out[i] += wv.b * cos(i * sign_space * wv.k + PI * 0.5);
+			out[i] += wv.b * sin(i * sign_space * wv.k);
 		}
 	}
 
