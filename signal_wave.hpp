@@ -9,12 +9,12 @@ struct Wave
 		b(0.0f)
 	{}
 
-	Wave(const std::vector<double>& in, const std::vector<double>& dists, uint32_t k_) :
+	Wave(const std::vector<double>& in, uint32_t k_) :
 		k(k_)
 	{
 		if (!k)
 		{
-			a = 1.0 / (2.0 * PI) * computeIntegral(in, dists);
+			a = 1.0 / (2.0 * PI) * computeIntegral(in);
 			b = 0;
 		}
 		else
@@ -38,8 +38,8 @@ struct Wave
 
 			double front_coef = 1.0 / PI;
 
-			a = front_coef * computeIntegral(processed_in_a, dists);
-			b = front_coef * computeIntegral(processed_in_b, dists);
+			a = front_coef * computeIntegral(processed_in_a);
+			b = front_coef * computeIntegral(processed_in_b);
 		}
 	}
 
@@ -50,12 +50,13 @@ struct Wave
 
 std::vector<double> wavesToSignal(const std::vector<Wave>& waves, uint32_t sampling)
 {
-	std::vector<double> out(sampling, 0.0);
-	//for (double& f : out) { f = 0.0f; }
+	std::vector<double> out(sampling);
+	for (double& f : out) { f = 0.0; }
+	
+	double sign_space = 2.0*PI / double(sampling);
 
 	for (const Wave& wv : waves)
 	{
-		double sign_space = 2.0*PI / double(sampling);
 		for (uint32_t i(0); i < sampling; ++i)
 		{
 			out[i] += wv.a * cos(i * sign_space * wv.k);

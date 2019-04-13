@@ -14,18 +14,14 @@ int main()
 
 	sf::RenderWindow window(sf::VideoMode(1000, 500), "Sign", sf::Style::Default);
 	window.setVerticalSyncEnabled(true);
-	//window.setFramerateLimit(60);
 
-	std::vector<double> signal_x;
-	std::vector<double> signal_y;
-	std::vector<double> distances;
+	std::vector<double> signal_x(win_width);
 
 	int32_t num_terms(1);
 
 	std::vector<Wave> terms_x;
-	std::vector<Wave> terms_y;
 
-	uint32_t out_signal_sampling(1024);
+	uint32_t out_signal_sampling(win_width);
 
 	bool clic = false;
 	sf::Vector2i last_point(0, 0);
@@ -64,61 +60,55 @@ int main()
 
 		if (clic)
 		{
-			float vx = last_point.x - current_mouse_pos.x;
-			float vy = last_point.y - current_mouse_pos.y;
-
-			double distance(sqrt(vx*vx + vy*vy));
-			if (distance > 1.0)
+			if (current_mouse_pos.x > 0 && current_mouse_pos.x < win_width)
 			{
-				signal_x.push_back(current_mouse_pos.x - win_width * 0.5f);
-				signal_y.push_back(current_mouse_pos.y - win_height * 0.5f);
-				distances.push_back(distance);
+				double vx = current_mouse_pos.x - last_point.x;
+				double vy = current_mouse_pos.y - last_point.y;
+				double dx = sign(vx);
 
-				last_point = current_mouse_pos;
+				for (uint32_t i(last_point.x); i != current_mouse_pos.x; i += dx)
+				{
+					double ratio = (double(i) - last_point.x) / vx;
+					signal_x[i] = last_point.y + vy * ratio - win_height / 2.0;
+				}
 			}
 		}
 
+		last_point = current_mouse_pos;
+
 		uint32_t signal_samples = signal_x.size();
 		//std::cout << signal_samples << std::endl;
-		sf::VertexArray in_va(sf::LinesStrip, signal_samples + 1);
+		sf::VertexArray in_va(sf::LinesStrip, signal_samples);
 		if (signal_samples)
 		{
 			for (uint32_t i(0); i< signal_samples; ++i)
 			{
-				in_va[i].position = sf::Vector2f(signal_x[i], signal_y[i]);
+				in_va[i].position = sf::Vector2f(i, signal_x[i]);
 			}
-			in_va[signal_samples].position = sf::Vector2f(signal_x[0], signal_y[0]);
 		}
 
 		terms_x.clear();
-		terms_y.clear();
 		num_terms = num_terms < 1 ? 1 : num_terms;
 		for (uint32_t i(0); i < num_terms; ++i)
 		{
-			terms_x.emplace_back(signal_x, distances, i);
-			terms_y.emplace_back(signal_y, distances, i);
+			terms_x.emplace_back(signal_x, i);
 		}
 
 		// Compute signal
 		auto out_x = wavesToSignal(terms_x, out_signal_sampling);
-		auto out_y = wavesToSignal(terms_y, out_signal_sampling);
 
 		// Create out_va
 		sf::VertexArray out_va(sf::LinesStrip, out_signal_sampling);
 		for (uint32_t i(0); i<out_signal_sampling; ++i)
 		{
 			double x = out_x[i];
-			double y = out_y[i];
 
-			if (!i)
-				std::cout << x << std::endl;
-
-			out_va[i].position = sf::Vector2f(i, x*0.001);
+			out_va[i].position = sf::Vector2f(i, x);
 			out_va[i].color = sf::Color::Green;
 		}
 
 		sf::Transform tf;
-		tf.translate(win_width * 0.5, win_height * 0.5);
+		tf.translate(0.0f, win_height*0.5f);
 
 		window.clear();
 
