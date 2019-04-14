@@ -16,6 +16,10 @@ struct Wave
 		{
 			a = 1.0 / (2.0 * PI) * computeIntegral(in, dists);
 			b = 0;
+
+			A = a;
+			phase = b;
+
 		} else {
 			std::vector<double> processed_in_a;
 			std::vector<double> processed_in_b;
@@ -42,9 +46,12 @@ struct Wave
 			a = front_coef * computeIntegral(processed_in_a, dists);
 			b = front_coef * computeIntegral(processed_in_b, dists);
 
-			//std::cout << "K= " << k << " a= " << a << " b= " << b << std::endl;
+			A = sqrt(a*a + b*b);
+			phase = atan(-b / a);
 		}
 	}
+
+	double A, phase;
 
 	double a;
 	double b;

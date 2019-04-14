@@ -6,13 +6,14 @@
 #include "signal_wave.hpp"
 #include "complex_wave.hpp"
 #include "debug_visu.hpp"
+#include "wave_painter.hpp"
 
 int main()
 {
 	const uint32_t win_width = 1000;
-	const uint32_t win_height = 500;
+	const uint32_t win_height = 800;
 
-	sf::RenderWindow window(sf::VideoMode(1000, 2*win_height), "Octave", sf::Style::Default);
+	sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Octave", sf::Style::Default);
 	window.setVerticalSyncEnabled(false);
 	window.setFramerateLimit(60);
 
@@ -25,18 +26,10 @@ int main()
 	std::vector<Wave> terms_x;
 	std::vector<Wave> terms_y;
 
-	uint32_t out_signal_sampling(1024);
-
 	bool clic = false;
 	sf::Vector2i last_point(0, 0);
 
-	sf::RectangleShape top_background(sf::Vector2f(win_width, win_height));
-	sf::RectangleShape bottom_background(sf::Vector2f(win_width, win_height));
 
-	top_background.setFillColor(sf::Color(0, 0, 0));
-	bottom_background.setFillColor(sf::Color(50, 50, 50));
-
-	bottom_background.setPosition(0, win_height);
 
 	while (window.isOpen())
 	{
@@ -148,16 +141,9 @@ int main()
 		// Draw
 		window.clear();
 
-		window.draw(top_background);
 		window.draw(in_va, tf_in);
-		
-		window.draw(bottom_background);
 		window.draw(out_va, tf_out);
 
-		/*window.draw(x_va, tf_out);
-		window.draw(debug_out_va_x, tf_out);
-		window.draw(debug_out_va_y, tf_out);*/
-		
 		window.display();
 	}
 
