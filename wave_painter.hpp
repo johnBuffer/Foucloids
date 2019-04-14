@@ -15,8 +15,16 @@ public:
 
 	Point draw(double t, double base_angle, sf::RenderTarget& target)
 	{
+		const float c_radius(4.0f);
+		sf::CircleShape circle(c_radius);
+		circle.setFillColor(sf::Color::Yellow);
+		circle.setOrigin(c_radius, c_radius);
+
 		double x(m_x);
 		double y(m_y);
+
+		sf::VertexArray arms(sf::LinesStrip, m_waves.size() + 1);
+		arms[0].position = sf::Vector2f(x, y);
 
 		uint32_t i(0);
 		for (const Wave& wave : m_waves)
@@ -24,20 +32,23 @@ public:
 			const double radius = wave.A;
 			const double phase = wave.phase;
 
-			sf::CircleShape circle(radius);
-			circle.setOutlineColor(sf::Color::Green);
-			circle.setFillColor(sf::Color(0, 0, 0, 0));
-			circle.setOutlineThickness(2.0f);
-			circle.setOrigin(radius, radius);
 			circle.setPosition(x, y);
 
 			x += radius * cos(i * t + phase + base_angle);
 			y += radius * sin(i * t + phase + base_angle);
 
+			arms[i+1].position = sf::Vector2f(x, y);
+			arms[i+1].color = sf::Color(150, 150, 150, 255);
 			target.draw(circle);
 
 			++i;
 		}
+
+		circle.setFillColor(sf::Color::Red);
+		circle.setPosition(x, y);
+
+		target.draw(arms);
+		target.draw(circle);
 
 		return Point(x, y);
 	}

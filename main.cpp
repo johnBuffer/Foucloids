@@ -32,8 +32,11 @@ int main()
 	WavePainter painter_x(terms_x, win_width*0.5f, win_height*0.25f);
 	WavePainter painter_y(terms_y, win_width*0.25f, win_height*0.5f);
 
-	sf::RectangleShape rx(sf::Vector2f(1.0f, win_height));
-	sf::RectangleShape ry(sf::Vector2f(win_width, 1.0f));
+	sf::VertexArray arms(sf::LineStrip, 3);
+
+	sf::CircleShape marker(3.0);
+	marker.setOrigin(3.0, 3.0);
+	marker.setFillColor(sf::Color::Red);
 
 	sf::VertexArray painter_va(sf::LinesStrip, 0);
 
@@ -115,13 +118,11 @@ int main()
 			for (uint32_t i(0); i< signal_samples; ++i)
 			{
 				in_va[i].position = sf::Vector2f(signal_x[i], -signal_y[i]);
+				in_va[i].color = sf::Color::Green;
 			}
 			in_va[signal_samples].position = sf::Vector2f(signal_x[0], -signal_y[0]);
+			in_va[signal_samples].color = sf::Color::Green;
 		}
-
-		uint32_t out_sampling(std::min(signal_samples, 1024U));
-
-		auto x_va = generateInVa(signal_x, distances, win_width);
 
 		terms_x.clear();
 		terms_y.clear();
@@ -132,66 +133,34 @@ int main()
 			terms_y.emplace_back(signal_y, distances, i);
 		}
 
-		// Compute signal
-		auto out_x = wavesToSignal(terms_x, out_sampling);
-		auto out_y = wavesToSignal(terms_y, out_sampling);
-
-		// Create out_va
-		sf::VertexArray debug_out_va_x = generateDebugOutVa(out_x, win_width, sf::Color::Cyan);
-		sf::VertexArray debug_out_va_y = generateDebugOutVa(out_y, win_width, sf::Color::Yellow);
-
-		sf::VertexArray out_va = generateOutVa(out_x, out_y, win_width);
-
-		/*double a = 100.0;
-		double b = 200.0;
-
-		double fact = 2.0*PI / 200.0;
-
-		std::vector<double> y1, y2;
-
-		for (uint32_t i(0); i < 1000; ++i)
-		{
-			double x = i * fact;
-			double ampl = std::sqrt(a*a + b*b);
-			double phi = std::atan(-b / a);
-
-			double cb = ampl * cos(x + phi) + 10.0;
-			double cs = a * cos(x) + b * sin(x);
-
-			y1.push_back(cs);
-			y2.push_back(cb);
-		}
-
-		auto ref = plot(y1, win_width, sf::Color::Red);
-		auto test = plot(y2, win_width, sf::Color::Green);*/
-
 		// Transforms
 		sf::Transform tf_in;
 		tf_in.translate(win_width * 0.5, win_height * 0.5);
-		sf::Transform tf_out;
-		tf_out.translate(0.0, win_height*0.5f);
-		tf_out.scale(1.0f, 0.5f);
-
+		
 		// Draw
 		window.clear();
 
 		window.draw(in_va, tf_in);
 
-		window.draw(x_va, tf_out);
-		window.draw(debug_out_va_x, tf_out);
+		Point px = painter_x.draw(t, 0.0, window);
+		Point py = painter_y.draw(t, -PI*0.5f, window);
 
-		/*Point px = painter_x.draw(t, 0.0, window);
-		Point py = painter_y.draw(t, PI*0.5f, window);
+		arms[0].position = sf::Vector2f(px.x, px.y);
+		arms[1].position = sf::Vector2f(px.x, py.y);
+		arms[2].position = sf::Vector2f(py.x, py.y);
+		window.draw(arms);
 
-		rx.setPosition(px.x, 0.0f);
-		ry.setPosition(0.0f, py.y);
+		marker.setPosition(px.x, py.y);
+
+		window.draw(arms);
+		window.draw(marker);
 
 		sf::Vertex vertex;
 		vertex.color = sf::Color::Red;
 		vertex.position = sf::Vector2f(px.x, py.y);
 		painter_va.append(vertex);
 
-		window.draw(painter_va);*/
+		window.draw(painter_va);
 
 		window.display();
 	}

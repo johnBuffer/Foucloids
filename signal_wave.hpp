@@ -47,7 +47,7 @@ struct Wave
 			a = front_coef * computeIntegral(processed_in_a, dists);
 			b = front_coef * computeIntegral(processed_in_b, dists);
 
-			A = sqrt(a*a + b*b);
+			A = sign(a) * sqrt(a*a + b*b);
 			phase = atan(-b / a);
 		}
 	}
@@ -66,24 +66,14 @@ std::vector<double> wavesToSignal(const std::vector<Wave>& waves, uint32_t sampl
 
 	for (const Wave& wv : waves)
 	{
-		double ampl = sign(wv.a) * std::sqrt(wv.a*wv.a + wv.b*wv.b);
-		double phi = std::atan(-wv.b / wv.a);
+		const double ampl = sign(wv.a) * std::sqrt(wv.a*wv.a + wv.b*wv.b);
+		const double phi = std::atan(-wv.b / wv.a);
 
 		double sign_space = 2.0*PI / double(sampling);
 		for (uint32_t i(0); i < sampling; ++i)
 		{
-			double x = i * sign_space;
-			
-			double cs = wv.a * cos(x * wv.k) + wv.b * sin(x * wv.k);
-			double cb = ampl * cos(x * wv.k + phi);
-
-			if (std::abs(cs - cb) > 0.1)
-			{
-				std::cout << "cs " << cs << " cb " << cb << std::endl;
-				std::cout << "wv.a " << wv.a << " wv.b " << wv.b << std::endl;
-				std::cout << "A " << ampl << " phi " << phi << std::endl << std::endl;
-			}
-			
+			const double x = i * sign_space;
+			const double cb = ampl * cos(x * wv.k + phi);
 			out[i] += cb;
 		}
 	}
