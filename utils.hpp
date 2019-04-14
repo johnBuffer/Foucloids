@@ -74,5 +74,9 @@ void join(double x1, double y1, double x2, double y2, std::vector<double>& in_x,
 	dists.push_back(distance - progress);
 }
 
+double sign(double d)
+{
+	return d < 0.0 ? -1.0 : 1.0;
+}
 
 

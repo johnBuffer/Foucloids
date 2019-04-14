@@ -83,6 +83,7 @@ int main()
 					signal_x.clear();
 					signal_y.clear();
 					distances.clear();
+					painter_va.clear();
 				}
 			}
 		}
@@ -105,7 +106,6 @@ int main()
 	
 				last_point = current_mouse_pos;
 			}
-
 		}
 
 		uint32_t signal_samples = signal_x.size();
@@ -121,6 +121,8 @@ int main()
 
 		uint32_t out_sampling(std::min(signal_samples, 1024U));
 
+		auto x_va = generateInVa(signal_x, distances, win_width);
+
 		terms_x.clear();
 		terms_y.clear();
 		num_terms = num_terms < 0 ? 0 : num_terms;
@@ -129,9 +131,6 @@ int main()
 			terms_x.emplace_back(signal_x, distances, i);
 			terms_y.emplace_back(signal_y, distances, i);
 		}
-
-		// Create out_va
-		sf::VertexArray x_va = generateInVa(signal_y, distances, win_width);
 
 		// Compute signal
 		auto out_x = wavesToSignal(terms_x, out_sampling);
@@ -143,19 +142,45 @@ int main()
 
 		sf::VertexArray out_va = generateOutVa(out_x, out_y, win_width);
 
+		/*double a = 100.0;
+		double b = 200.0;
+
+		double fact = 2.0*PI / 200.0;
+
+		std::vector<double> y1, y2;
+
+		for (uint32_t i(0); i < 1000; ++i)
+		{
+			double x = i * fact;
+			double ampl = std::sqrt(a*a + b*b);
+			double phi = std::atan(-b / a);
+
+			double cb = ampl * cos(x + phi) + 10.0;
+			double cs = a * cos(x) + b * sin(x);
+
+			y1.push_back(cs);
+			y2.push_back(cb);
+		}
+
+		auto ref = plot(y1, win_width, sf::Color::Red);
+		auto test = plot(y2, win_width, sf::Color::Green);*/
+
 		// Transforms
 		sf::Transform tf_in;
 		tf_in.translate(win_width * 0.5, win_height * 0.5);
 		sf::Transform tf_out;
-		tf_out.translate(win_width * 0.5, win_height * 1.5);
+		tf_out.translate(0.0, win_height*0.5f);
+		tf_out.scale(1.0f, 0.5f);
 
 		// Draw
 		window.clear();
 
 		window.draw(in_va, tf_in);
-		window.draw(out_va, tf_out);
 
-		Point px = painter_x.draw(t, 0.0, window);
+		window.draw(x_va, tf_out);
+		window.draw(debug_out_va_x, tf_out);
+
+		/*Point px = painter_x.draw(t, 0.0, window);
 		Point py = painter_y.draw(t, PI*0.5f, window);
 
 		rx.setPosition(px.x, 0.0f);
@@ -166,7 +191,7 @@ int main()
 		vertex.position = sf::Vector2f(px.x, py.y);
 		painter_va.append(vertex);
 
-		window.draw(painter_va);
+		window.draw(painter_va);*/
 
 		window.display();
 	}

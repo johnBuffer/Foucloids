@@ -1,5 +1,6 @@
 #pragma once
 #include "utils.hpp"
+#include <cmath>
 
 struct Wave
 {
@@ -15,7 +16,7 @@ struct Wave
 		if (!k)
 		{
 			a = 1.0 / (2.0 * PI) * computeIntegral(in, dists);
-			b = 0;
+			b = 0.0;
 
 			A = a;
 			phase = b;
@@ -65,11 +66,25 @@ std::vector<double> wavesToSignal(const std::vector<Wave>& waves, uint32_t sampl
 
 	for (const Wave& wv : waves)
 	{
-		double sign_space = 2.0*PI / double(sampling + 1);
+		double ampl = sign(wv.a) * std::sqrt(wv.a*wv.a + wv.b*wv.b);
+		double phi = std::atan(-wv.b / wv.a);
+
+		double sign_space = 2.0*PI / double(sampling);
 		for (uint32_t i(0); i < sampling; ++i)
 		{
-			out[i] += wv.a * cos(i * sign_space * wv.k);
-			out[i] += wv.b * sin(i * sign_space * wv.k);
+			double x = i * sign_space;
+			
+			double cs = wv.a * cos(x * wv.k) + wv.b * sin(x * wv.k);
+			double cb = ampl * cos(x * wv.k + phi);
+
+			if (std::abs(cs - cb) > 0.1)
+			{
+				std::cout << "cs " << cs << " cb " << cb << std::endl;
+				std::cout << "wv.a " << wv.a << " wv.b " << wv.b << std::endl;
+				std::cout << "A " << ampl << " phi " << phi << std::endl << std::endl;
+			}
+			
+			out[i] += cb;
 		}
 	}
 

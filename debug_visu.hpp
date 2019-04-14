@@ -61,3 +61,18 @@ sf::VertexArray generateOutVa(const std::vector<double>& out_x, const std::vecto
 	return out_va;
 }
 
+sf::VertexArray plot(const std::vector<double>& ys, double width, sf::Color color)
+{
+	uint32_t size(ys.size());
+	sf::VertexArray va(sf::LinesStrip, size);
+	double fact = width / double(size);
+	uint32_t i(0);
+	for (const double& y : ys)
+	{
+		va[i].position = sf::Vector2f(i*fact, y);
+		va[i].color = color;
+		++i;
+	}
+
+	return va;
+}
