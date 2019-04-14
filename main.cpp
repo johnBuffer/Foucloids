@@ -117,18 +117,17 @@ int main()
 
 		uint32_t out_sampling(std::min(signal_samples, 1024U));
 
-		// Create out_va
-		sf::VertexArray x_va = generateInVa(signal_y, distances, win_width);
-
 		terms_x.clear();
 		terms_y.clear();
 		num_terms = num_terms < 0 ? 0 : num_terms;
-		std::cout << "Harmonics: " << num_terms << std::endl;
 		for (uint32_t i(0); i < num_terms; ++i)
 		{
 			terms_x.emplace_back(signal_x, distances, i);
 			terms_y.emplace_back(signal_y, distances, i);
 		}
+
+		// Create out_va
+		sf::VertexArray x_va = generateInVa(signal_y, distances, win_width);
 
 		// Compute signal
 		auto out_x = wavesToSignal(terms_x, out_sampling);

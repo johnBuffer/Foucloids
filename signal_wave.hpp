@@ -41,6 +41,8 @@ struct Wave
 
 			a = front_coef * computeIntegral(processed_in_a, dists);
 			b = front_coef * computeIntegral(processed_in_b, dists);
+
+			//std::cout << "K= " << k << " a= " << a << " b= " << b << std::endl;
 		}
 	}
 
