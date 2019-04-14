@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "point.hpp"
 
 constexpr double PI = 3.141592653589793238462;
 
@@ -47,31 +48,30 @@ const std::vector<double> computeDistances(const std::vector<double>& x, const s
 	return dists;
 }
 
-void join(double x1, double y1, double x2, double y2, std::vector<double>& in_x, std::vector<double>& in_y, std::vector<double>& dists, double step)
+void join(const Point& p1, const Point& p2, std::vector<double>& in_x, std::vector<double>& in_y, std::vector<double>& dists, double step)
 {
-	double vx = x2 - x1;
-	double vy = y2 - y1;
-	double distance(sqrt(vx*vx + vy*vy));
+	const Point v(p2 - p1);
+	double dist(distance(v));
 
-	vx /= distance;
-	vy /= distance;
+	const double vx = v.x / dist;
+	const double vy = v.y / dist;
 
 	double progress(0.0);
-	while (progress + step < distance)
+	while (progress + step < dist)
 	{
 		progress += step;
 
-		double x = x1 + vx * progress;
-		double y = y1 + vy * progress;
+		double x = p1.x + vx * progress;
+		double y = p1.y + vy * progress;
 
 		in_x.push_back(x);
 		in_y.push_back(y);
 		dists.push_back(step);
 	}
 
-	in_x.push_back(x2);
-	in_y.push_back(y2);
-	dists.push_back(distance - progress);
+	in_x.push_back(p2.x);
+	in_y.push_back(p2.y);
+	dists.push_back(dist - progress);
 }
 
 double sign(double d)

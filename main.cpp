@@ -16,40 +16,40 @@ int main()
 	sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Octave", sf::Style::Default);
 	window.setVerticalSyncEnabled(true);
 	sfev::EventManager event_manager(window);
+	const Point window_offset(win_width*0.5f, win_height*0.5f);
 
+	// Signal inputs
 	std::vector<double> signal_x;
 	std::vector<double> signal_y;
 	std::vector<double> distances;
 
+	// Terms init
 	int32_t num_terms(0);
-
 	std::vector<Wave> terms_x;
 	std::vector<Wave> terms_y;
 
-	bool clic = false;
-	sf::Vector2i last_point(0, 0), current_mouse_pos(0, 0);
-
+	// Painter objects
 	WavePainter painter_x(terms_x, win_width*0.5f, win_height*0.25f);
 	WavePainter painter_y(terms_y, win_width*0.25f, win_height*0.5f);
-
 	sf::VertexArray arms(sf::LineStrip, 3);
-
 	sf::CircleShape marker(3.0);
 	marker.setOrigin(3.0, 3.0);
 	marker.setFillColor(sf::Color::Red);
-
 	sf::VertexArray painter_va(sf::LinesStrip, 0);
 
+	// The Holy Time
 	double t(0.0);
 
+	// Events handling
+	bool clic = false;
+	sf::Vector2i last_point(0, 0), current_mouse_pos(0, 0);
 	event_manager.addEventCallback(sf::Event::Closed, [&](const sf::Event&) {window.close(); });
 	event_manager.addMousePressedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = true; last_point = current_mouse_pos; });
 	event_manager.addMouseReleasedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = false; 
-		double x1 = current_mouse_pos.x - win_width * 0.5;
-		double y1 = current_mouse_pos.y - win_height * 0.5;
-		double x2 = signal_x[0];
-		double y2 = signal_y[0];
-		join(x1, -y1, x2, y2, signal_x, signal_y, distances, 1.0); 
+		const Point p0(current_mouse_pos.x, current_mouse_pos.y);
+		const Point p1(p0 - window_offset);
+		const Point p2(signal_x[0], signal_y[0]);
+		join(Point(p1.x, -p1.y), p2, signal_x, signal_y, distances, 1.0); 
 	});
 	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {num_terms -= 1; painter_va.clear(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {num_terms += 1; painter_va.clear(); });
@@ -75,7 +75,7 @@ int main()
 				double x2 = current_mouse_pos.x - win_width * 0.5;
 				double y2 = current_mouse_pos.y - win_height * 0.5;
 
-				join(x1, -y1, x2, -y2, signal_x, signal_y, distances, 1.0);
+				join(Point(x1, -y1), Point(x2, -y2), signal_x, signal_y, distances, 1.0);
 	
 				last_point = current_mouse_pos;
 			}
