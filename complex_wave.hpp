@@ -8,6 +8,7 @@ complex polarToComplex(double r, double o)
 	return complex(r * cos(o), r * sin(o));
 }
 
+// Compute C[n]
 struct ComplexWave
 {
 	ComplexWave(const std::vector<Point>& signal, const std::vector<double>& dists, uint32_t k_) :

@@ -5,91 +5,56 @@
 #include <dynamic_blur.hpp>
 #include "signal_wave.hpp"
 #include "complex_wave.hpp"
-#include "debug_visu.hpp"
+#include "wave_painter.hpp"
+#include <event_manager.hpp>
 
 int main()
 {
 	const uint32_t win_width = 1000;
-	const uint32_t win_height = 500;
+	const uint32_t win_height = 800;
 
-	sf::RenderWindow window(sf::VideoMode(1000, 2*win_height), "Octave", sf::Style::Default);
+	sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Octave", sf::Style::Default);
+	sfev::EventManager event_manager(window);
 	window.setVerticalSyncEnabled(false);
 	window.setFramerateLimit(60);
 
-	std::vector<double> signal_x;
-	std::vector<double> signal_y;
+	std::vector<Point> signal;
 	std::vector<double> distances;
 
+	std::vector<ComplexWave> waves;
+	WavePainter painter(waves, win_width*0.5, win_height*0.5);
 	int32_t num_terms(0);
 
-	std::vector<Wave> terms_x;
-	std::vector<Wave> terms_y;
-
-	uint32_t out_signal_sampling(1024);
-
 	bool clic = false;
-	sf::Vector2i last_point(0, 0);
+	sf::Vector2i last_point(0, 0), current_mouse_pos(0, 0);
 
-	sf::RectangleShape top_background(sf::Vector2f(win_width, win_height));
-	sf::RectangleShape bottom_background(sf::Vector2f(win_width, win_height));
+	// Event intialization
+	event_manager.addEventCallback(sf::Event::Closed, [&](const sf::Event&) {window.close(); });
+	event_manager.addMousePressedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = true; last_point = current_mouse_pos; });
+	event_manager.addMouseReleasedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = false; });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {num_terms -= 1; });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {num_terms += 1; });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::R, [&](const sf::Event&) {signal.clear(), distances.clear(); });
 
-	top_background.setFillColor(sf::Color(0, 0, 0));
-	bottom_background.setFillColor(sf::Color(50, 50, 50));
-
-	bottom_background.setPosition(0, win_height);
+	// Time initialization
+	double t(0.0);
 
 	while (window.isOpen())
 	{
-		sf::Vector2i current_mouse_pos = sf::Mouse::getPosition(window);
-		sf::Event event;
-		while (window.pollEvent(event))
-		{
-			if (event.type == sf::Event::Closed)
-			{
-				window.close();
-			}
-			else if (event.type == sf::Event::MouseButtonPressed)
-			{
-				clic = true;
-				last_point = current_mouse_pos;
-			}
-			else if (event.type == sf::Event::MouseButtonReleased)
-			{
-				clic = false;
-				double x1 = current_mouse_pos.x - win_width * 0.5;
-				double y1 = current_mouse_pos.y - win_height * 0.5;
-
-				double x2 = signal_x[0];
-				double y2 = signal_y[0];
-
-				join(x1, -y1, x2, y2, signal_x, signal_y, distances, 1.0);
-			}
-			else if (event.type == sf::Event::KeyReleased)
-			{
-				if (event.key.code == sf::Keyboard::A)
-				{
-					num_terms-=1;
-				}
-				else if (event.key.code == sf::Keyboard::E)
-				{
-					num_terms+=1;
-				}
-				else if (event.key.code == sf::Keyboard::R)
-				{
-					signal_x.clear();
-					signal_y.clear();
-					distances.clear();
-				}
-			}
-		}
+		t += 0.016;
+		
+		current_mouse_pos = sf::Mouse::getPosition(window);
+		event_manager.processEvents();
 
 		if (clic)
 		{
-			double vx = current_mouse_pos.x - last_point.x;
-			double vy = current_mouse_pos.y - last_point.y;
-			double distance(sqrt(vx*vx + vy*vy));
+			Point p1(last_point.x, last_point.y);
+			Point p2(current_mouse_pos.x, current_mouse_pos.y);
+			
+			Point v(p2 - p1);
+			double dist(distance(v));
 
-			if (distance > 1.0)
+			if (dist > 1.0)
 			{
 				double x1 = last_point.x - win_width * 0.5;
 				double y1 = last_point.y - win_height * 0.5;
@@ -97,48 +62,32 @@ int main()
 				double x2 = current_mouse_pos.x - win_width * 0.5;
 				double y2 = current_mouse_pos.y - win_height * 0.5;
 
-				join(x1, -y1, x2, -y2, signal_x, signal_y, distances, 1.0);
+				join(Point(x1, -y1), Point(x2, -y2), signal, distances, 1.0);
 	
 				last_point = current_mouse_pos;
 			}
 
 		}
 
-		uint32_t signal_samples = signal_x.size();
+		uint32_t signal_samples = signal.size();
 		sf::VertexArray in_va(sf::LinesStrip, signal_samples + 1);
 		if (signal_samples)
 		{
 			for (uint32_t i(0); i< signal_samples; ++i)
 			{
-				in_va[i].position = sf::Vector2f(signal_x[i], -signal_y[i]);
+				const Point& p(signal[i]);
+				in_va[i].position = sf::Vector2f(p.x, -p.y);
 			}
-			in_va[signal_samples].position = sf::Vector2f(signal_x[0], -signal_y[0]);
+			in_va[signal_samples].position = sf::Vector2f(signal[0].x, -signal[0].y);
 		}
 
-		uint32_t out_sampling(std::min(signal_samples, 1024U));
-
-		// Create out_va
-		sf::VertexArray x_va = generateInVa(signal_y, distances, win_width);
-
-		terms_x.clear();
-		terms_y.clear();
+		waves.clear();
 		num_terms = num_terms < 0 ? 0 : num_terms;
 		std::cout << "Harmonics: " << num_terms << std::endl;
 		for (int32_t i(0); i < num_terms; ++i)
 		{
-			terms_x.emplace_back(signal_x, distances, i);
-			terms_y.emplace_back(signal_y, distances, i);
+			waves.emplace_back(signal, distances, i);
 		}
-
-		// Compute signal
-		auto out_x = wavesToSignal(terms_x, out_sampling);
-		auto out_y = wavesToSignal(terms_y, out_sampling);
-
-		// Create out_va
-		sf::VertexArray debug_out_va_x = generateDebugOutVa(out_x, win_width, sf::Color::Cyan);
-		sf::VertexArray debug_out_va_y = generateDebugOutVa(out_y, win_width, sf::Color::Yellow);
-
-		sf::VertexArray out_va = generateOutVa(out_x, out_y, win_width);
 
 		// Transforms
 		sf::Transform tf_in;
@@ -149,15 +98,8 @@ int main()
 		// Draw
 		window.clear();
 
-		window.draw(top_background);
 		window.draw(in_va, tf_in);
-		
-		window.draw(bottom_background);
-		window.draw(out_va, tf_out);
-
-		/*window.draw(x_va, tf_out);
-		window.draw(debug_out_va_x, tf_out);
-		window.draw(debug_out_va_y, tf_out);*/
+		painter.draw(t, window);
 		
 		window.display();
 	}

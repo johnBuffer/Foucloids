@@ -51,10 +51,15 @@ struct PolarPoint
 };
 
 
-double distance(const Point& p1, const Point& p2)
+double distance(const Point& p1, const Point& p2 = Point(0.0, 0.0))
 {
 	double vx(p1.x - p2.x);
 	double vy(p1.y - p2.y);
 
 	return sqrt(vx*vx + vy*vy);
+}
+
+Point operator-(const Point& p1, const Point& p2)
+{
+	return Point(p1.x - p2.x, p1.y - p2.y);
 }
