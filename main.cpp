@@ -124,7 +124,7 @@ int main()
 		terms_y.clear();
 		num_terms = num_terms < 0 ? 0 : num_terms;
 		std::cout << "Harmonics: " << num_terms << std::endl;
-		for (uint32_t i(0); i < num_terms; ++i)
+		for (int32_t i(0); i < num_terms; ++i)
 		{
 			terms_x.emplace_back(signal_x, distances, i);
 			terms_y.emplace_back(signal_y, distances, i);

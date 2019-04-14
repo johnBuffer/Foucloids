@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
-
-constexpr double PI = 3.141592653589793238462;
+#include "point.hpp"
 
 double sum(const std::vector<double>& in)
 {
@@ -12,21 +11,6 @@ double sum(const std::vector<double>& in)
 	}
 
 	return sum_vec;
-}
-
-double computeIntegral(const std::vector<double>& signal, const std::vector<double>& distances)
-{
-	const double fact = 2.0 * PI / sum(distances);
-
-	uint32_t i(0);
-	double integral(0.0);
-	for (const double f : signal)
-	{
-		integral += f * distances[i];
-		++i;
-	}
-
-	return fact * integral;
 }
 
 const std::vector<double> computeDistances(const std::vector<double>& x, const std::vector<double>& y)
@@ -43,6 +27,19 @@ const std::vector<double> computeDistances(const std::vector<double>& x, const s
 	double vx(x[size-1] - x[0]);
 	double vy(y[size-1] - y[0]);
 	dists[size - 1] = sqrt(vx*vx + vy * vy);
+
+	return dists;
+}
+
+const std::vector<double> computeDistances(const std::vector<Point>& points)
+{
+	uint32_t size(points.size());
+	std::vector<double> dists(size);
+	for (uint32_t i(0); i < size; ++i)
+	{
+		uint32_t next_index((i + 1) % size);
+		dists[i] = distance(points[i], points[next_index]);
+	}
 
 	return dists;
 }

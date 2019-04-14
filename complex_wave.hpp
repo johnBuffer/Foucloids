@@ -1,52 +1,31 @@
 #pragma once
 
 #include <vector>
+#include "point.hpp"
 
-struct Point
+complex polarToComplex(double r, double o)
 {
-	Point(): 
-		x(0.0),
-		y(0.0)
-	{}
-
-	Point(double x_, double y_) :
-		x(x_),
-		y(y_)
-	{}
-
-	double x, y;
-};
-
-struct PolarPoint
-{
-	PolarPoint() :
-		r(0.0),
-		a(0.0)
-	{}
-
-	PolarPoint(double r_, double a_) :
-		r(r_),
-		a(a_)
-	{}
-
-	PolarPoint(const Point& point)
-	{
-		double vx(point.x);
-		double vy(point.y);
-
-		r = sqrt(vx*vx + vy*vy);
-		a = acos(vx / r);
-		if (vy < 0)
-			a *= -1.0;
-	}
-
-	double r, a;
-};
+	return complex(r * cos(o), r * sin(o));
+}
 
 struct ComplexWave
 {
-	ComplexWave(const std::vector<Point>& signal, uint32_t k)
+	ComplexWave(const std::vector<Point>& signal, const std::vector<double>& dists, uint32_t k_) :
+		k(k_)
 	{
+		const uint32_t size(signal.size());
+		std::vector<complex> processed(size);
 
+		double t(0.0);
+		for (uint32_t i(0); i < size; ++i)
+		{
+			processed[i] = complex(signal[i]) * polarToComplex(1, -(t*k));
+			t += dists[i];
+		}
+
+		a = computeIntegral(processed, dists);
 	}
+
+	complex a;
+	uint32_t k;
 };

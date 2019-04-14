@@ -1,5 +1,6 @@
 #pragma once
 #include "utils.hpp"
+#include "integral.hpp"
 
 struct Wave
 {
@@ -14,13 +15,13 @@ struct Wave
 	{
 		if (!k)
 		{
-			a = 1.0 / (2.0 * PI) * computeIntegral(in, dists);
+			a = 1.0 / (Consts::TWO_PI) * computeIntegral(in, dists);
 			b = 0;
 		} else {
 			std::vector<double> processed_in_a;
 			std::vector<double> processed_in_b;
 
-			const double scale_factor = 2.0*PI / sum(dists);
+			const double scale_factor = Consts::TWO_PI / sum(dists);
 
 			double x(0.0);
 			uint32_t i(0);
@@ -37,7 +38,7 @@ struct Wave
 				++i;
 			}
 
-			double front_coef = 1.0 / PI;
+			double front_coef = Consts::INV_PI;
 
 			a = front_coef * computeIntegral(processed_in_a, dists);
 			b = front_coef * computeIntegral(processed_in_b, dists);
@@ -56,7 +57,7 @@ std::vector<double> wavesToSignal(const std::vector<Wave>& waves, uint32_t sampl
 
 	for (const Wave& wv : waves)
 	{
-		double sign_space = 2.0*PI / double(sampling + 1);
+		double sign_space = Consts::TWO_PI / double(sampling + 1);
 		for (uint32_t i(0); i < sampling; ++i)
 		{
 			out[i] += wv.a * cos(i * sign_space * wv.k);
