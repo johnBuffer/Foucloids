@@ -11,16 +11,16 @@ complex polarToComplex(double r, double o)
 // Compute C[n]
 struct ComplexWave
 {
-	ComplexWave(const std::vector<Point>& signal, const std::vector<double>& dists, uint32_t k_) :
+	ComplexWave(const std::vector<Point>& signal, const std::vector<double>& dists, int32_t k_) :
 		k(k_)
 	{
-		const uint32_t size(signal.size());
+		const int32_t size(signal.size());
 		std::vector<complex> processed(size);
 
 		double t(0.0);
 		for (uint32_t i(0); i < size; ++i)
 		{
-			processed[i] = complex(signal[i]) * polarToComplex(1, -(t*k));
+			processed[i] = complex(signal[i]) * polarToComplex(1.0, -(t*k));
 			t += dists[i];
 		}
 
@@ -28,5 +28,5 @@ struct ComplexWave
 	}
 
 	complex a;
-	uint32_t k;
+	int32_t k;
 };

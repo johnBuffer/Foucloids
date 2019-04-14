@@ -13,7 +13,10 @@ int main()
 	const uint32_t win_width = 1000;
 	const uint32_t win_height = 800;
 
-	sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Octave", sf::Style::Default);
+	sf::ContextSettings settings;
+	settings.antialiasingLevel = 8;
+
+	sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Octave", sf::Style::Default, settings);
 	sfev::EventManager event_manager(window);
 	window.setVerticalSyncEnabled(false);
 	window.setFramerateLimit(60);
@@ -87,6 +90,7 @@ int main()
 		for (int32_t i(0); i < num_terms; ++i)
 		{
 			waves.emplace_back(signal, distances, i);
+			waves.emplace_back(signal, distances, -i);
 		}
 
 		// Transforms

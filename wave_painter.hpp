@@ -19,10 +19,13 @@ public:
 		double y(m_y);
 
 		uint32_t i(0);
-		for (const ComplexWave& wave : m_waves)
+		for (uint32_t i(0); i<m_waves.size(); ++i)
 		{
-			double radius(wave.a.real());
-			double phase(0.0);
+			const ComplexWave& w1(m_waves[i]);
+			const ComplexWave& w2(m_waves[i+1]);
+
+			const complex cs(w1.a + w2.a);
+			const double radius(0.5 * cs.real());
 
 			sf::CircleShape circle(radius);
 			circle.setOutlineColor(sf::Color::Green);
