@@ -33,6 +33,13 @@ public:
 			const double radius = wave.A;
 			const double phase = wave.phase;
 
+			sf::CircleShape cr(radius);
+			cr.setOutlineColor(sf::Color(150, 150, 150));
+			cr.setFillColor(sf::Color(0, 0, 0, 0));
+			cr.setOutlineThickness(1.0f);
+			cr.setOrigin(radius, radius);
+			cr.setPosition(x, y);
+
 			circle.setPosition(x, y);
 
 			x += radius * cos(i * t + phase + base_angle);
@@ -41,6 +48,7 @@ public:
 			arms[i+1].position = sf::Vector2f(x, y);
 			arms[i+1].color = sf::Color(150, 150, 150, 255);
 			target.draw(circle);
+			target.draw(cr);
 
 			++i;
 		}

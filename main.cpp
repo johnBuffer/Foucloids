@@ -114,15 +114,12 @@ int main()
 
 		Point px = painter_x.draw(t, 0.0, window);
 		Point py = painter_y.draw(t, -PI*0.5f, window);
-
 		arms[0].position = sf::Vector2f(px.x, px.y);
 		arms[1].position = sf::Vector2f(px.x, py.y);
 		arms[2].position = sf::Vector2f(py.x, py.y);
 		window.draw(arms);
 
 		marker.setPosition(px.x, py.y);
-
-		window.draw(arms);
 		window.draw(marker);
 
 		sf::Vertex vertex;
