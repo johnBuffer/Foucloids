@@ -10,8 +10,8 @@
 
 int main()
 {
-	const uint32_t win_width = 1000;
-	const uint32_t win_height = 800;
+	const uint32_t win_width = 1600;
+	const uint32_t win_height = 900;
 
 	sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Octave", sf::Style::Default);
 	window.setVerticalSyncEnabled(false);
@@ -29,10 +29,19 @@ int main()
 	bool clic = false;
 	sf::Vector2i last_point(0, 0);
 
+	WavePainter painter_x(terms_x, win_width*0.5f, win_height*0.25f);
+	WavePainter painter_y(terms_y, win_width*0.25f, win_height*0.5f);
 
+	sf::RectangleShape rx(sf::Vector2f(1.0f, win_height));
+	sf::RectangleShape ry(sf::Vector2f(win_width, 1.0f));
+
+	sf::VertexArray painter_va(sf::LinesStrip, 0);
+
+	double t(0.0);
 
 	while (window.isOpen())
 	{
+		t += 0.016;
 		sf::Vector2i current_mouse_pos = sf::Mouse::getPosition(window);
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -62,10 +71,12 @@ int main()
 				if (event.key.code == sf::Keyboard::A)
 				{
 					num_terms-=1;
+					painter_va.clear();
 				}
 				else if (event.key.code == sf::Keyboard::E)
 				{
 					num_terms+=1;
+					painter_va.clear();
 				}
 				else if (event.key.code == sf::Keyboard::R)
 				{
@@ -143,6 +154,19 @@ int main()
 
 		window.draw(in_va, tf_in);
 		window.draw(out_va, tf_out);
+
+		Point px = painter_x.draw(t, 0.0, window);
+		Point py = painter_y.draw(t, PI*0.5f, window);
+
+		rx.setPosition(px.x, 0.0f);
+		ry.setPosition(0.0f, py.y);
+
+		sf::Vertex vertex;
+		vertex.color = sf::Color::Red;
+		vertex.position = sf::Vector2f(px.x, py.y);
+		painter_va.append(vertex);
+
+		window.draw(painter_va);
 
 		window.display();
 	}
