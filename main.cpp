@@ -2,7 +2,7 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
-#include <dynamic_blur.hpp>
+#include <event_manager.hpp>
 #include "signal_wave.hpp"
 #include "complex_wave.hpp"
 #include "debug_visu.hpp"
@@ -14,8 +14,8 @@ int main()
 	const uint32_t win_height = 900;
 
 	sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Octave", sf::Style::Default);
-	window.setVerticalSyncEnabled(false);
-	window.setFramerateLimit(60);
+	window.setVerticalSyncEnabled(true);
+	sfev::EventManager event_manager(window);
 
 	std::vector<double> signal_x;
 	std::vector<double> signal_y;
@@ -27,7 +27,7 @@ int main()
 	std::vector<Wave> terms_y;
 
 	bool clic = false;
-	sf::Vector2i last_point(0, 0);
+	sf::Vector2i last_point(0, 0), current_mouse_pos(0, 0);
 
 	WavePainter painter_x(terms_x, win_width*0.5f, win_height*0.25f);
 	WavePainter painter_y(terms_y, win_width*0.25f, win_height*0.5f);
@@ -42,54 +42,24 @@ int main()
 
 	double t(0.0);
 
+	event_manager.addEventCallback(sf::Event::Closed, [&](const sf::Event&) {window.close(); });
+	event_manager.addMousePressedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = true; last_point = current_mouse_pos; });
+	event_manager.addMouseReleasedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = false; 
+		double x1 = current_mouse_pos.x - win_width * 0.5;
+		double y1 = current_mouse_pos.y - win_height * 0.5;
+		double x2 = signal_x[0];
+		double y2 = signal_y[0];
+		join(x1, -y1, x2, y2, signal_x, signal_y, distances, 1.0); 
+	});
+	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {num_terms -= 1; painter_va.clear(); });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {num_terms += 1; painter_va.clear(); });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::R, [&](const sf::Event&) {signal_x.clear(), signal_y.clear(), distances.clear(), painter_va.clear(); });
+
 	while (window.isOpen())
 	{
 		t += 0.016;
-		sf::Vector2i current_mouse_pos = sf::Mouse::getPosition(window);
-		sf::Event event;
-		while (window.pollEvent(event))
-		{
-			if (event.type == sf::Event::Closed)
-			{
-				window.close();
-			}
-			else if (event.type == sf::Event::MouseButtonPressed)
-			{
-				clic = true;
-				last_point = current_mouse_pos;
-			}
-			else if (event.type == sf::Event::MouseButtonReleased)
-			{
-				clic = false;
-				double x1 = current_mouse_pos.x - win_width * 0.5;
-				double y1 = current_mouse_pos.y - win_height * 0.5;
-
-				double x2 = signal_x[0];
-				double y2 = signal_y[0];
-
-				join(x1, -y1, x2, y2, signal_x, signal_y, distances, 1.0);
-			}
-			else if (event.type == sf::Event::KeyReleased)
-			{
-				if (event.key.code == sf::Keyboard::A)
-				{
-					num_terms-=1;
-					painter_va.clear();
-				}
-				else if (event.key.code == sf::Keyboard::E)
-				{
-					num_terms+=1;
-					painter_va.clear();
-				}
-				else if (event.key.code == sf::Keyboard::R)
-				{
-					signal_x.clear();
-					signal_y.clear();
-					distances.clear();
-					painter_va.clear();
-				}
-			}
-		}
+		current_mouse_pos = sf::Mouse::getPosition(window);
+		event_manager.processEvents();
 
 		if (clic)
 		{

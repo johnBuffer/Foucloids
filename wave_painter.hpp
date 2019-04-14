@@ -25,6 +25,7 @@ public:
 
 		sf::VertexArray arms(sf::LinesStrip, m_waves.size() + 1);
 		arms[0].position = sf::Vector2f(x, y);
+		arms[0].color = sf::Color(150, 150, 150, 255);
 
 		uint32_t i(0);
 		for (const Wave& wave : m_waves)
