@@ -24,7 +24,7 @@ public:
 			const ComplexWave& w1(m_waves[i]);
 
 			const double radius(std::abs(w1.a));
-			const double phi(std::arg(w1.a) + Consts::PI);
+			const double phi(std::arg(w1.a));
 
 			sf::CircleShape circle(radius);
 			circle.setOutlineColor(sf::Color::Green);
