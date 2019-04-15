@@ -10,7 +10,7 @@
 
 int main()
 {
-	const uint32_t win_width = 1000;
+	const uint32_t win_width = 1600;
 	const uint32_t win_height = 800;
 
 	sf::ContextSettings settings;
@@ -20,7 +20,7 @@ int main()
 	sfev::EventManager event_manager(window);
 	const Point window_offset(win_width*0.5f, win_height*0.5f);
 	window.setVerticalSyncEnabled(false);
-	window.setFramerateLimit(120);
+	window.setFramerateLimit(60);
 
 	std::vector<Point> signal;
 	std::vector<double> distances;

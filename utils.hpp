@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "point.hpp"
+#include <sstream>
 
 double sum(const std::vector<double>& in)
 {
@@ -94,3 +95,33 @@ sf::CircleShape getCircle(float radius, float x, float y, float thickness, const
 
 	return circle;
 }
+
+std::string round(double d, int decimals)
+{
+	std::string result;
+	std::stringstream sx;
+	sx << std::fixed << d;
+	result = sx.str();
+
+	size_t pos = result.find('.');
+	if (pos == std::string::npos)
+		return result;
+	else if (!decimals)
+	{
+		return result.substr(0, pos);
+	}
+	else
+	{
+		if (pos + decimals + 1 < result.size())
+		{
+			return result.substr(0, pos + decimals + 1);
+		}
+	}
+
+	return result;
+}
+
+
+
+
+

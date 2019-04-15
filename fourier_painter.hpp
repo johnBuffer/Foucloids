@@ -3,6 +3,8 @@
 #include <SFML/Graphics.hpp>
 #include "complex_wave.hpp"
 #include <vector>
+#include <list>
+#include "harmony_utils.hpp"
 
 struct HarmonicCycloid
 {
@@ -257,6 +259,7 @@ private:
 
 	Point m_result;
 
+	// Pivate methods
 	uint32_t getPointCount() const
 	{
 		return uint32_t(Consts::TWO_PI / m_dt) - 1U;
