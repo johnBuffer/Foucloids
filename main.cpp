@@ -46,7 +46,6 @@ int main()
 	event_manager.addKeyReleasedCallback(sf::Keyboard::R, [&](const sf::Event&) {signal.clear(), distances.clear(); painter.clear(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::Space, [&](const sf::Event&) {painter.setDt(0.005); });
 
-
 	while (window.isOpen())
 	{	
 		painter.update();
