@@ -26,6 +26,7 @@ int main()
 
 	std::vector<ComplexWave> waves;
 	WavePainter painter(waves, win_width*0.5, win_height*0.5);
+	sf::VertexArray painter_va(sf::LinesStrip, 0);
 	int32_t num_terms(0);
 
 	bool clic = false;
@@ -35,9 +36,9 @@ int main()
 	event_manager.addEventCallback(sf::Event::Closed, [&](const sf::Event&) {window.close(); });
 	event_manager.addMousePressedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = true; last_point = current_mouse_pos; });
 	event_manager.addMouseReleasedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = false; });
-	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {num_terms -= 1; });
-	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {num_terms += 1; });
-	event_manager.addKeyReleasedCallback(sf::Keyboard::R, [&](const sf::Event&) {signal.clear(), distances.clear(); });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {num_terms -= 1; painter_va.clear(); });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {num_terms += 1; painter_va.clear(); });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::R, [&](const sf::Event&) {signal.clear(), distances.clear(); painter_va.clear(); });
 
 	// Time initialization
 	double t(0.0);
@@ -87,24 +88,29 @@ int main()
 		waves.clear();
 		num_terms = num_terms < 0 ? 0 : num_terms;
 		std::cout << "Harmonics: " << num_terms << std::endl;
-		for (int32_t i(0); i < num_terms; ++i)
+		for (int32_t i(-num_terms+1); i < num_terms; ++i)
 		{
 			waves.emplace_back(signal, distances, i);
-			waves.emplace_back(signal, distances, -i);
 		}
 
 		// Transforms
 		sf::Transform tf_in;
 		tf_in.translate(win_width * 0.5, win_height * 0.5);
 		sf::Transform tf_out;
-		tf_out.translate(win_width * 0.5, win_height * 1.5);
+		tf_out.scale(0.25f, 0.25f);
+		tf_out.translate(win_width * 0.5, win_height * 0.5);
 
 		// Draw
 		window.clear();
 
 		window.draw(in_va, tf_in);
-		painter.draw(t, window);
-		
+		Point p = painter.draw(t, window);
+		sf::Vertex v;
+		v.position = sf::Vector2f(p.x, p.y);
+		v.color = sf::Color::Red;
+		painter_va.append(v);
+		window.draw(painter_va);
+
 		window.display();
 	}
 

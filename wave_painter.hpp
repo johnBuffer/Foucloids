@@ -13,7 +13,7 @@ public:
 		m_waves(waves)
 	{}
 
-	void draw(double t, sf::RenderTarget& target)
+	Point draw(double t, sf::RenderTarget& target)
 	{
 		double x(m_x);
 		double y(m_y);
@@ -22,10 +22,9 @@ public:
 		for (uint32_t i(0); i<m_waves.size(); ++i)
 		{
 			const ComplexWave& w1(m_waves[i]);
-			const ComplexWave& w2(m_waves[i+1]);
 
-			const complex cs(w1.a + w2.a);
-			const double radius(0.5 * cs.real());
+			const double radius(std::abs(w1.a));
+			const double phi(std::arg(w1.a) + Consts::PI);
 
 			sf::CircleShape circle(radius);
 			circle.setOutlineColor(sf::Color::Green);
@@ -34,13 +33,13 @@ public:
 			circle.setOrigin(radius, radius);
 			circle.setPosition(x, y);
 
-			x += radius * cos((i + 1) * t);
-			y += radius * sin((i + 1) * t);
+			x += radius * cos(w1.k * t + phi);
+			y += radius * sin(w1.k * t + phi);
 
 			target.draw(circle);
-
-			++i;
 		}
+
+		return Point(x, y);
 	}
 
 private:
