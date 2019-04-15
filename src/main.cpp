@@ -27,6 +27,7 @@ int main()
 
 	FourierPainter painter(window, signal, distances);
 	painter.setDt(0.016);
+	bool draw_signal(true);
 
 	bool clic = false;
 	sf::Vector2i last_point(0, 0), current_mouse_pos(0, 0);
@@ -37,14 +38,17 @@ int main()
 	event_manager.addMouseReleasedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = false;
 		const Point p0(current_mouse_pos.x, current_mouse_pos.y);
 		const Point p1(p0 - window_offset);
-		const Point& p2(signal.front());
-		join(Point(p1.x, p1.y), p2, signal, distances, 1.0);
+		const Point p2(signal[0]);
+		join(p1, p2, signal, distances, 2.0);
 		painter.notifySignalChanged();
 	});
 	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {painter.delHarmonic(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {painter.addHarmonic(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::R, [&](const sf::Event&) {signal.clear(), distances.clear(); painter.clear(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::Space, [&](const sf::Event&) {painter.setDt(0.005); });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::S, [&](const sf::Event&) {draw_signal =!draw_signal; });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::Q, [&](const sf::Event&) {painter.draw_harmonics = !painter.draw_harmonics; });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::D, [&](const sf::Event&) {painter.draw_arms = !painter.draw_arms; });
 
 	while (window.isOpen())
 	{	
@@ -69,7 +73,7 @@ int main()
 				double x2 = current_mouse_pos.x - win_width * 0.5;
 				double y2 = current_mouse_pos.y - win_height * 0.5;
 
-				join(Point(x1, y1), Point(x2, y2), signal, distances, 1.0);
+				join(Point(x1, y1), Point(x2, y2), signal, distances, 2.0);
 	
 				last_point = current_mouse_pos;
 			}
@@ -78,12 +82,13 @@ int main()
 		}
 
 		uint32_t signal_samples = signal.size();
-		sf::VertexArray in_va(sf::LinesStrip, signal_samples + 1);
+		sf::VertexArray in_va(sf::LinesStrip, signal_samples+1);
 		if (signal_samples)
 		{
-			for (uint32_t i(0); i< signal_samples; ++i)
+			for (uint32_t i(0); i<signal_samples; ++i)
 			{
 				const Point& p(signal[i]);
+
 				in_va[i].position = sf::Vector2f(p.x, p.y);
 			}
 			in_va[signal_samples].position = sf::Vector2f(signal[0].x, signal[0].y);
@@ -96,7 +101,9 @@ int main()
 		// Draw
 		window.clear();
 
-		window.draw(in_va, tf_in);
+		if (draw_signal)
+			window.draw(in_va, tf_in);
+		
 		painter.draw(tf_in);
 		
 		window.display();

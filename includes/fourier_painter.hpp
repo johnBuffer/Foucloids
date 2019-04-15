@@ -55,6 +55,7 @@ struct CycloidVertexArray
 		if (canRead())
 		{
 			uint32_t index((i - offset) % va_size);
+
 			va[index] = v;
 		}
 		else
@@ -76,6 +77,8 @@ public:
 		m_target(target),
 		m_signal(signal),
 		m_dists(dists),
+		draw_harmonics(true),
+		draw_arms(true),
 		m_time(0.0),
 		m_dt(0.016),
 		m_current_point(0),
@@ -205,9 +208,12 @@ public:
 
 	void draw(const sf::RenderStates& rs) const
 	{
-		for (const auto& cva : m_inter_va)
+		if (draw_harmonics)
 		{
-			m_target.draw(cva.va, rs);
+			for (const auto& cva : m_inter_va)
+			{
+				m_target.draw(cva.va, rs);
+			}
 		}
 
 		const sf::Color arms_color(255, 200, 75);
@@ -220,26 +226,34 @@ public:
 		for (const HarmonicCycloid& cycloid : m_cycloids)
 		{
 			float radius(cycloid.radius);
-			sf::CircleShape circle = getCircle(radius, cycloid.x, cycloid.y, 1.0f, sf::Color(100, 100, 100));
+			sf::CircleShape circle = getCircle(radius, cycloid.x, cycloid.y, 2.0f, sf::Color(100, 100, 100));
 			sf::CircleShape arms_join = getDisc(4.0f, cycloid.x, cycloid.y, sf::Color::Yellow);
 
 			arms[i+1].position = sf::Vector2f(cycloid.x, cycloid.y);
 			arms[i+1].color = arms_color;
 
-			m_target.draw(circle, rs);
-			m_target.draw(arms_join, rs);
+			if (draw_arms)
+			{
+				m_target.draw(circle, rs);
+				m_target.draw(arms_join, rs);
+			}
 			++i;
 		}
 
 		arms[i+1].position = sf::Vector2f(m_result.x, m_result.y);
 		arms[i+1].color = arms_color;
 
-		m_target.draw(arms, rs);
-		m_target.draw(m_va.va, rs);
+		if (draw_arms)
+		{
+			m_target.draw(arms, rs);
+			sf::CircleShape marker = getDisc(4.0f, m_result.x, m_result.y, sf::Color(255, 128, 0));
+			m_target.draw(marker, rs);
+		}
 
-		sf::CircleShape marker = getDisc(4.0f, m_result.x, m_result.y, sf::Color(255, 128, 0));
-		m_target.draw(marker, rs);
+		m_target.draw(m_va.va, rs);
 	}
+
+	bool draw_harmonics, draw_arms;
 
 private:
 	uint32_t m_harmonics_count;
