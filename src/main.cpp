@@ -36,11 +36,14 @@ int main()
 	event_manager.addEventCallback(sf::Event::Closed, [&](const sf::Event&) {window.close(); });
 	event_manager.addMousePressedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = true; last_point = current_mouse_pos; });
 	event_manager.addMouseReleasedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = false;
+	if (!signal.empty())
+	{
 		const Point p0(current_mouse_pos.x, current_mouse_pos.y);
 		const Point p1(p0 - window_offset);
 		const Point p2(signal[0]);
 		join(p1, p2, signal, distances, 2.0);
 		painter.notifySignalChanged();
+	}
 	});
 	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {painter.delHarmonic(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {painter.addHarmonic(); });
