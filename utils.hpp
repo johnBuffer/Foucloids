@@ -51,6 +51,9 @@ void join(const Point& p1, const Point& p2, std::vector<Point>& signal, std::vec
 	double vy = v.y;
 	double dist(distance(v));
 
+	if (dist < 0.01)
+		return;
+
 	vx /= dist;
 	vy /= dist;
 
@@ -70,5 +73,24 @@ void join(const Point& p1, const Point& p2, std::vector<Point>& signal, std::vec
 	dists.push_back(dist - progress);
 }
 
+sf::CircleShape getDisc(float radius, float x, float y, const sf::Color& color)
+{
+	sf::CircleShape circle(radius);
+	circle.setFillColor(color);
+	circle.setOrigin(radius, radius);
+	circle.setPosition(x, y);
 
+	return circle;
+}
 
+sf::CircleShape getCircle(float radius, float x, float y, float thickness, const sf::Color& color)
+{
+	sf::CircleShape circle(radius);
+	circle.setOutlineColor(color);
+	circle.setFillColor(sf::Color(0, 0, 0, 0));
+	circle.setOutlineThickness(thickness);
+	circle.setOrigin(radius, radius);
+	circle.setPosition(x, y);
+
+	return circle;
+}

@@ -20,12 +20,13 @@ int main()
 	sfev::EventManager event_manager(window);
 	const Point window_offset(win_width*0.5f, win_height*0.5f);
 	window.setVerticalSyncEnabled(false);
-	window.setFramerateLimit(60);
+	window.setFramerateLimit(120);
 
 	std::vector<Point> signal;
 	std::vector<double> distances;
 
 	FourierPainter painter(window, signal, distances);
+	painter.setDt(0.016);
 
 	bool clic = false;
 	sf::Vector2i last_point(0, 0), current_mouse_pos(0, 0);
@@ -43,15 +44,12 @@ int main()
 	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {painter.delHarmonic(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {painter.addHarmonic(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::R, [&](const sf::Event&) {signal.clear(), distances.clear(); painter.clear(); });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::Space, [&](const sf::Event&) {painter.setDt(0.005); });
 
-	// Time initialization
-	double t(0.0);
 
 	while (window.isOpen())
-	{
-		t += 0.016;
-		
-		painter.update(t);
+	{	
+		painter.update();
 
 		current_mouse_pos = sf::Mouse::getPosition(window);
 		event_manager.processEvents();
