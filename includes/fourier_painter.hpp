@@ -3,22 +3,21 @@
 #include <SFML/Graphics.hpp>
 #include "complex_wave.hpp"
 #include <vector>
-#include <list>
+
 
 struct HarmonicCycloid
 {
-	HarmonicCycloid(double radius_, double phi_, double k_, double x_ = 0.0, double y_ = 0.0) :
+	HarmonicCycloid(double radius_, double phi_, int32_t k_, double x = 0.0, double y = 0.0) :
 		radius(radius_),
 		phi(phi_),
 		k(k_),
-		x(x_),
-		y(y_)
+		pos(x, y)
 	{}
 
 	double radius;
 	double phi;
-	double k;
-	double x, y;
+	int32_t k;
+	Point pos;
 };
 
 HarmonicCycloid complexWaveToCycloid(const ComplexWave& w)
@@ -43,9 +42,9 @@ struct CycloidVertexArray
 		return va.getVertexCount() == va_size;
 	}
 
-	void clear()
+	void clear(uint32_t offset_)
 	{
-		offset = 0;
+		offset = offset_;
 		va.clear();
 	}
 
@@ -68,6 +67,22 @@ struct CycloidVertexArray
 	uint32_t offset;
 };
 
+struct ComplexCoef
+{
+	ComplexCoef() :
+		cycloid(0.0, 0.0, 0),
+		cva(sf::LinesStrip, 0, 0)
+	{}
+
+	ComplexCoef(const Signal2D& signal, int32_t k, uint32_t va_size, uint32_t start) :
+		cycloid(complexWaveToCycloid(ComplexWave(signal, k))),
+		cva(sf::LinesStrip, va_size, start)
+	{}
+
+	HarmonicCycloid cycloid;
+	CycloidVertexArray cva;
+};
+
 class FourierPainter
 {
 public:
@@ -87,7 +102,6 @@ public:
 	void setDt(double dt)
 	{
 		m_dt = dt;
-		
 		resetTime();
 	}
 
@@ -96,64 +110,32 @@ public:
 		const uint32_t hc(getHarmonicsCount());
 		if (!hc)
 		{
-			m_harmonics.emplace_back(m_signal, 0);
-			m_cycloids.push_back(complexWaveToCycloid(m_harmonics.back()));
-			m_inter_va.emplace_back(sf::LinesStrip, getPointCount(), m_current_point);
-		}
-		else
-		{
+			addCoef(0);
+		} else {
 			int32_t ch(hc);
-			m_harmonics.emplace_back(m_signal,  ch);
-			m_cycloids.push_back(complexWaveToCycloid(m_harmonics.back()));
-			m_inter_va.emplace_back(sf::LinesStrip, getPointCount(), m_current_point);
-
-			m_harmonics.emplace_back(m_signal, -ch);
-			m_cycloids.push_back(complexWaveToCycloid(m_harmonics.back()));
-			m_inter_va.emplace_back(sf::LinesStrip, getPointCount(), m_current_point);
+			addCoef( ch);
+			addCoef(-ch);
 		}
-
-		std::sort(m_cycloids.begin(), m_cycloids.end(), [&](const HarmonicCycloid& c1, const HarmonicCycloid& c2) {return c1.radius > c2.radius; });
+		std::sort(m_coefs.begin(), m_coefs.end(), [&](const ComplexCoef& c1, const ComplexCoef& c2) {return c1.cycloid.radius > c2.cycloid.radius; });
 		update();
-
-		m_va.clear();
-		m_va.offset = m_current_point;
-	}
-
-	const std::vector<ComplexWave>& getWaves() const
-	{
-		return m_harmonics;
+		m_va.clear(m_current_point);
 	}
 
 	void delHarmonic()
 	{
-		resetTime();
 		const uint32_t hc(getHarmonicsCount());
-		if (hc < 2)
-		{
-			m_harmonics.clear();
-			m_cycloids.clear();
-			m_inter_va.pop_back();
+		if (hc < 2) {
+			m_coefs.clear();
+		} else {
+			int32_t ch(hc - 1);
+			remove( ch);
+			remove(-ch);
 		}
-		else
-		{
-			m_harmonics.pop_back();
-			m_harmonics.pop_back();
-			m_cycloids.pop_back();
-			m_cycloids.pop_back();
-			m_inter_va.pop_back();
-			m_inter_va.pop_back();
-		}
-
-		m_va.clear();
 	}
 
 	void clear()
 	{
-		m_harmonics.clear();
-		m_cycloids.clear();
-		m_va.clear();
-		m_inter_va.clear();
-
+		m_coefs.clear();
 		resetTime();
 	}
 
@@ -161,100 +143,79 @@ public:
 	{
 		m_time = 0.0;
 		m_current_point = 0;
-
-		m_va.clear();
-		m_va.va_size = getPointCount();
-		for (auto& cva : m_inter_va)
+		m_va.clear(m_current_point);
+		for (ComplexCoef& coef : m_coefs)
 		{
-			cva.clear();
-			cva.va_size = getPointCount();
+			coef.cva.clear(m_current_point);
 		}
 	}
 
 	void notifySignalChanged()
 	{
-		const uint32_t hc(getHarmonicsCount());
 		clear();
-		for (uint32_t i(hc); i--;)
-		{
-			addHarmonic();
-		}
-
-		resetTime();
-		update();
 	}
 
 	void update()
 	{
 		uint32_t n_points(Consts::TWO_PI / m_dt);
-
-		float cc(m_cycloids.size());
+		float cc(m_coefs.size());
 		uint32_t i(0);
-		double x(0.0), y(0.0);
-
-		for (HarmonicCycloid& cycloid : m_cycloids)
+		Point pt(0.0, 0.0);
+		for (ComplexCoef& coef : m_coefs)
 		{
-			cycloid.x = x;
-			cycloid.y = y;
-
+			HarmonicCycloid& cycloid(coef.cycloid);
 			double xc(cycloid.k * m_time + cycloid.phi);
-			x += cycloid.radius * cos(xc);
-			y += cycloid.radius * sin(xc);
+			
+			cycloid.pos = pt;
+			pt += Point(cycloid.radius * cos(xc), cycloid.radius * sin(xc));
 
 			float ratio(i / cc);
-			CycloidVertexArray& current_cva(m_inter_va[i]);
-			current_cva.addOrUpdate(m_current_point, sf::Vertex(sf::Vector2f(x, y), sf::Color(255 * ratio, 128 * ratio, 0)));
+			CycloidVertexArray& current_cva(coef.cva);
+			current_cva.addOrUpdate(m_current_point, sf::Vertex(sf::Vector2f(pt.x, pt.y), sf::Color(255 * ratio, 128 * ratio, 0)));
 			++i;
 		}
 
-		m_result = Point(x, y);
-		m_va.addOrUpdate(m_current_point, sf::Vertex(sf::Vector2f(x, y), sf::Color(255, 128, 0)));
+		m_va.addOrUpdate(m_current_point, sf::Vertex(sf::Vector2f(pt.x, pt.y), sf::Color(255, 128, 0)));
+		m_result = pt;
 
 		advanceTime();
 	}
 
 	void draw(const sf::RenderStates& rs) const
 	{
-		if (draw_harmonics)
-		{
-			for (const auto& cva : m_inter_va)
-			{
-				m_target.draw(cva.va, rs);
-			}
-		}
-
 		const sf::Color arms_color(255, 200, 75);
-
-		sf::VertexArray arms(sf::LinesStrip, m_cycloids.size() + 2);
+		sf::VertexArray arms(sf::LinesStrip, m_coefs.size() + 2);
 		arms[0].position = sf::Vector2f(0.0f, 0.0f);
 		arms[0].color = arms_color;
 
 		uint32_t i(0);
-		for (const HarmonicCycloid& cycloid : m_cycloids)
+		for (const ComplexCoef& coef : m_coefs)
 		{
+			const HarmonicCycloid& cycloid(coef.cycloid);
 			float radius(cycloid.radius);
-			sf::CircleShape circle = getCircle(radius, cycloid.x, cycloid.y, 2.0f, sf::Color(100, 100, 100));
-			sf::CircleShape arms_join = getDisc(4.0f, cycloid.x, cycloid.y, sf::Color::Yellow);
 
-			arms[i+1].position = sf::Vector2f(cycloid.x, cycloid.y);
+			arms[i+1].position = sf::Vector2f(cycloid.pos.x, cycloid.pos.y);
 			arms[i+1].color = arms_color;
 
-			if (draw_arms)
-			{
-				m_target.draw(circle, rs);
-				m_target.draw(arms_join, rs);
+			if (draw_arms) {
+				m_target.draw(getCircle(radius, cycloid.pos, 2.0f, sf::Color(100, 100, 100)), rs);
+				m_target.draw(getDisc(4.0f, cycloid.pos, sf::Color::Yellow), rs);
 			}
+
+			if (draw_harmonics) {
+				m_target.draw(coef.cva.va, rs);
+			}
+
 			++i;
 		}
 
-		arms[i+1].position = sf::Vector2f(m_result.x, m_result.y);
+		arms[i+1].position = toV2f(m_result);
 		arms[i+1].color = arms_color;
 
 		if (draw_arms)
 		{
 			m_target.draw(arms, rs);
-			sf::CircleShape marker = getDisc(4.0f, m_result.x, m_result.y, sf::Color(255, 128, 0));
-			m_target.draw(marker, rs);
+			m_target.draw(getDisc(4.0f, m_result, sf::Color(255, 128, 0)), rs);
 		}
 
 		m_target.draw(m_va.va, rs);
@@ -276,8 +237,7 @@ private:
 	uint32_t m_harmonics_count;
 	sf::RenderTarget& m_target;
 
-	std::vector<ComplexWave> m_harmonics;
-	std::vector<HarmonicCycloid> m_cycloids;
+	std::vector<ComplexCoef> m_coefs;
 	const Signal2D& m_signal;
 
 	double m_time;
@@ -285,7 +245,6 @@ private:
 	uint32_t m_current_point;
 
 	CycloidVertexArray m_va;
-	std::vector<CycloidVertexArray> m_inter_va;
 
 	Point m_result;
 
@@ -303,14 +262,26 @@ private:
 
 	uint32_t getHarmonicsCount() const
 	{
-		std::size_t size(m_harmonics.size());
-
-		if (size < 2)
-		{
+		std::size_t size(m_coefs.size());
+		if (size < 2) {
 			return size;
 		}
-
 		return (size - 1) / 2 + 1;
+	}
+
+	void addCoef(int32_t c)
+	{
+		m_coefs.emplace_back(m_signal, c, getPointCount(), m_current_point);
+	}
+
+	void remove(int32_t k)
+	{
+		for (uint32_t i(0); i < m_coefs.size(); ++i) {
+			if (m_coefs[i].cycloid.k == k) {
+				m_coefs.erase(m_coefs.begin() + i);
+				return;
+			}
+		}
 	}
 };
 

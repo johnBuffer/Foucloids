@@ -21,6 +21,12 @@ struct Point
 		y(y_)
 	{}
 
+	void operator+=(const Point& p)
+	{
+		x += p.x;
+		y += p.y;
+	}
+
 	double x, y;
 };
 

@@ -99,16 +99,7 @@ private:
 
 	void updatLastDistances()
 	{
-		/*uint32_t size(m_points.size());
-		m_distances.resize(size);
-		for (uint32_t i(0); i < size; ++i)
-		{
-			uint32_t next_index((i + 1) % size);
-			m_distances[i] = distance(m_points[i], m_points[next_index]);
-			std::cout << m_distances[i] << std::endl;
-		}*/
-
-		uint32_t size(m_points.size());
+		std::size_t size(m_points.size());
 		if (size > 1)
 		{
 			const Point& old_last(m_points[size - 2]);

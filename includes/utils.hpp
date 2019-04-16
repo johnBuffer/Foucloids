@@ -15,56 +15,27 @@ double sum(const std::vector<double>& in)
 	return sum_vec;
 }
 
-const std::vector<double> computeDistances(const std::vector<double>& x, const std::vector<double>& y)
+sf::Vector2f toV2f(const Point& p)
 {
-	uint32_t size(x.size());
-	std::vector<double> dists(size);
-	for (uint32_t i(0); i < size-1; ++i)
-	{
-		double vx(x[i] - x[i + 1]);
-		double vy(y[i] - y[i + 1]);
-		dists[i] = sqrt(vx*vx + vy*vy);
-	}
-
-	double vx(x[size-1] - x[0]);
-	double vy(y[size-1] - y[0]);
-	dists[size - 1] = sqrt(vx*vx + vy * vy);
-
-	return dists;
+	return sf::Vector2f(float(p.x), float(p.y));
 }
 
-const std::vector<double> computeDistances(const std::vector<Point>& points)
-{
-	uint32_t size(points.size());
-	std::vector<double> dists(size);
-	for (uint32_t i(0); i < size; ++i)
-	{
-		uint32_t next_index((i + 1) % size);
-		dists[i] = distance(points[i], points[next_index]);
-	}
-
-	return dists;
-}
-
-sf::CircleShape getDisc(float radius, float x, float y, const sf::Color& color)
+sf::CircleShape getDisc(float radius, const Point& p, const sf::Color& color)
 {
 	sf::CircleShape circle(radius);
 	circle.setFillColor(color);
 	circle.setOrigin(radius, radius);
-	circle.setPosition(x, y);
+	circle.setPosition(toV2f(p));
 
 	return circle;
 }
 
-sf::CircleShape getCircle(float radius, float x, float y, float thickness, const sf::Color& color)
+sf::CircleShape getCircle(float radius, const Point& p, float thickness, const sf::Color& color)
 {
-	sf::CircleShape circle(radius);
-	circle.setOutlineColor(color);
-	circle.setFillColor(sf::Color(0, 0, 0, 0));
-	circle.setPointCount(radius * 16);
+	sf::CircleShape circle = getDisc(radius, p, sf::Color(0, 0, 0, 0));
+	circle.setPointCount(uint32_t(radius) * 16);
 	circle.setOutlineThickness(thickness);
-	circle.setOrigin(radius, radius);
-	circle.setPosition(x, y);
+	circle.setOutlineColor(color);
 
 	return circle;
 }
@@ -97,7 +68,7 @@ std::string round(double d, int decimals)
 const sf::VertexArray generateVertexArray(const Signal2D& signal)
 {
 	const auto& points(signal.points());
-	const uint32_t signal_samples(points.size());
+	const std::size_t signal_samples(points.size());
 	sf::VertexArray va(sf::LinesStrip, signal_samples + 1);
 	if (signal_samples)
 	{
@@ -105,7 +76,7 @@ const sf::VertexArray generateVertexArray(const Signal2D& signal)
 		{
 			const Point& p(points[i]);
 
-			va[i].position = sf::Vector2f(p.x, p.y);
+			va[i].position = sf::Vector2f(float(p.x), float(p.y));
 		}
 		va[signal_samples].position = sf::Vector2f(points[0].x, points[0].y);
 	}
