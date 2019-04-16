@@ -4,7 +4,6 @@
 #include "complex_wave.hpp"
 #include <vector>
 #include <list>
-#include "harmony_utils.hpp"
 
 struct HarmonicCycloid
 {
@@ -72,11 +71,10 @@ struct CycloidVertexArray
 class FourierPainter
 {
 public:
-	FourierPainter(sf::RenderTarget& target, const std::vector<Point>& signal, const std::vector<double>& dists) :
+	FourierPainter(sf::RenderTarget& target, const Signal2D& signal) :
 		m_harmonics_count(0),
 		m_target(target),
 		m_signal(signal),
-		m_dists(dists),
 		draw_harmonics(true),
 		draw_arms(true),
 		m_time(0.0),
@@ -98,24 +96,32 @@ public:
 		const uint32_t hc(getHarmonicsCount());
 		if (!hc)
 		{
-			m_harmonics.emplace_back(m_signal, m_dists, 0);
+			m_harmonics.emplace_back(m_signal, 0);
 			m_cycloids.push_back(complexWaveToCycloid(m_harmonics.back()));
 			m_inter_va.emplace_back(sf::LinesStrip, getPointCount(), m_current_point);
 		}
 		else
 		{
 			int32_t ch(hc);
-			m_harmonics.emplace_back(m_signal, m_dists,  ch);
+			m_harmonics.emplace_back(m_signal,  ch);
 			m_cycloids.push_back(complexWaveToCycloid(m_harmonics.back()));
 			m_inter_va.emplace_back(sf::LinesStrip, getPointCount(), m_current_point);
 
-			m_harmonics.emplace_back(m_signal, m_dists, -ch);
+			m_harmonics.emplace_back(m_signal, -ch);
 			m_cycloids.push_back(complexWaveToCycloid(m_harmonics.back()));
 			m_inter_va.emplace_back(sf::LinesStrip, getPointCount(), m_current_point);
 		}
 
+		std::sort(m_cycloids.begin(), m_cycloids.end(), [&](const HarmonicCycloid& c1, const HarmonicCycloid& c2) {return c1.radius > c2.radius; });
+		update();
+
 		m_va.clear();
 		m_va.offset = m_current_point;
+	}
+
+	const std::vector<ComplexWave>& getWaves() const
+	{
+		return m_harmonics;
 	}
 
 	void delHarmonic()
@@ -185,6 +191,7 @@ public:
 		float cc(m_cycloids.size());
 		uint32_t i(0);
 		double x(0.0), y(0.0);
+
 		for (HarmonicCycloid& cycloid : m_cycloids)
 		{
 			cycloid.x = x;
@@ -253,6 +260,16 @@ public:
 		m_target.draw(m_va.va, rs);
 	}
 
+	const Point& getResult() const
+	{
+		return m_result;
+	}
+
+	const double getTime() const
+	{
+		return m_time;
+	}
+
 	bool draw_harmonics, draw_arms;
 
 private:
@@ -261,8 +278,7 @@ private:
 
 	std::vector<ComplexWave> m_harmonics;
 	std::vector<HarmonicCycloid> m_cycloids;
-	const std::vector<Point>& m_signal;
-	const std::vector<double>& m_dists;
+	const Signal2D& m_signal;
 
 	double m_time;
 	double m_dt;
@@ -276,7 +292,7 @@ private:
 	// Pivate methods
 	uint32_t getPointCount() const
 	{
-		return uint32_t(Consts::TWO_PI / m_dt) - 1U;
+		return uint32_t(Consts::TWO_PI / m_dt);
 	}
 
 	void advanceTime()

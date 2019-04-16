@@ -3,6 +3,7 @@
 #include <vector>
 #include "point.hpp"
 #include "integral.hpp"
+#include "signal2D.hpp"
 
 complex polarToComplex(double r, double o)
 {
@@ -12,24 +13,26 @@ complex polarToComplex(double r, double o)
 // Compute C[n]
 struct ComplexWave
 {
-	ComplexWave(const std::vector<Point>& signal, const std::vector<double>& dists, int32_t k_) :
+	ComplexWave(const Signal2D& signal, int32_t k_) :
 		k(k_)
 	{
-		const int32_t size(signal.size());
+		const std::vector<Point>& signal_points(signal.points());
+		const std::vector<double>& signal_dists(signal.distances());
+		const int32_t size(signal_points.size());
 		std::vector<complex> processed(size);
 
-		const double scale_factor = Consts::TWO_PI / sum(dists);
+		const double scale_factor = Consts::TWO_PI / sum(signal_dists);
 
 		double t(0.0);
 		for (uint32_t i(0); i < size; ++i)
 		{
-			processed[i] = complex(signal[i]) * polarToComplex(1.0, -((t*scale_factor - Consts::PI)*k));
-			t += dists[i];
+			processed[i] = complex(signal_points[i]) * polarToComplex(1.0, -((t*scale_factor - Consts::PI)*k));
+			t += signal_dists[i];
 		}
 
 		double front_coef = Consts::INV_TWO_PI;
 
-		a = front_coef * computeIntegral(processed, dists);
+		a = front_coef * computeIntegral(processed, signal_dists);
 	}
 
 	complex a;

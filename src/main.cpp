@@ -3,10 +3,10 @@
 #include <vector>
 #include <iostream>
 #include <dynamic_blur.hpp>
-#include "signal_wave.hpp"
 #include "complex_wave.hpp"
 #include "fourier_painter.hpp"
 #include <event_manager.hpp>
+#include "signal2D.hpp"
 
 int main()
 {
@@ -16,16 +16,15 @@ int main()
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = 8;
 
-	sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Octave", sf::Style::Default, settings);
+	sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Farmony", sf::Style::Default, settings);
 	sfev::EventManager event_manager(window);
 	const Point window_offset(win_width*0.5f, win_height*0.5f);
 	window.setVerticalSyncEnabled(false);
 	window.setFramerateLimit(60);
 
-	std::vector<Point> signal;
-	std::vector<double> distances;
+	Signal2D signal;
 
-	FourierPainter painter(window, signal, distances);
+	FourierPainter painter(window, signal);
 	painter.setDt(0.016);
 	bool draw_signal(true);
 
@@ -35,20 +34,10 @@ int main()
 	// Event intialization
 	event_manager.addEventCallback(sf::Event::Closed, [&](const sf::Event&) {window.close(); });
 	event_manager.addMousePressedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = true; last_point = current_mouse_pos; });
-	event_manager.addMouseReleasedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = false;
-	if (!signal.empty())
-	{
-		const Point p0(current_mouse_pos.x, current_mouse_pos.y);
-		const Point p1(p0 - window_offset);
-		const Point p2(signal[0]);
-		join(p1, p2, signal, distances, 2.0);
-		painter.notifySignalChanged();
-	}
-	});
+	event_manager.addMouseReleasedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = false; signal.close(1.0);});
 	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {painter.delHarmonic(); });
-	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {painter.addHarmonic(); });
-	event_manager.addKeyReleasedCallback(sf::Keyboard::R, [&](const sf::Event&) {signal.clear(), distances.clear(); painter.clear(); });
-	event_manager.addKeyReleasedCallback(sf::Keyboard::Space, [&](const sf::Event&) {painter.setDt(0.005); });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {painter.addHarmonic();});
+	event_manager.addKeyReleasedCallback(sf::Keyboard::R, [&](const sf::Event&) {signal.clear(); painter.clear(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::S, [&](const sf::Event&) {draw_signal =!draw_signal; });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::Q, [&](const sf::Event&) {painter.draw_harmonics = !painter.draw_harmonics; });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::D, [&](const sf::Event&) {painter.draw_arms = !painter.draw_arms; });
@@ -62,40 +51,12 @@ int main()
 
 		if (clic)
 		{
-			Point p1(last_point.x, last_point.y);
 			Point p2(current_mouse_pos.x, current_mouse_pos.y);
-			
-			Point v(p2 - p1);
-			double dist(distance(v));
-
-			if (dist > 1.0)
-			{
-				double x1 = last_point.x - win_width * 0.5;
-				double y1 = last_point.y - win_height * 0.5;
-
-				double x2 = current_mouse_pos.x - win_width * 0.5;
-				double y2 = current_mouse_pos.y - win_height * 0.5;
-
-				join(Point(x1, y1), Point(x2, y2), signal, distances, 2.0);
-	
-				last_point = current_mouse_pos;
-			}
-
+			signal.addPointInterpolate(p2 - window_offset, 1.0, 1.0);
 			painter.notifySignalChanged();
 		}
 
-		uint32_t signal_samples = signal.size();
-		sf::VertexArray in_va(sf::LinesStrip, signal_samples+1);
-		if (signal_samples)
-		{
-			for (uint32_t i(0); i<signal_samples; ++i)
-			{
-				const Point& p(signal[i]);
-
-				in_va[i].position = sf::Vector2f(p.x, p.y);
-			}
-			in_va[signal_samples].position = sf::Vector2f(signal[0].x, signal[0].y);
-		}
+		//std::cout << signal.points().size() << std::endl;
 
 		// Transforms
 		sf::Transform tf_in;
@@ -105,7 +66,7 @@ int main()
 		window.clear();
 
 		if (draw_signal)
-			window.draw(in_va, tf_in);
+			window.draw(generateVertexArray(signal), tf_in);
 		
 		painter.draw(tf_in);
 		

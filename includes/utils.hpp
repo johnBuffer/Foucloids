@@ -2,6 +2,7 @@
 #include <vector>
 #include "point.hpp"
 #include <sstream>
+#include "signal2D.hpp"
 
 double sum(const std::vector<double>& in)
 {
@@ -43,35 +44,6 @@ const std::vector<double> computeDistances(const std::vector<Point>& points)
 	}
 
 	return dists;
-}
-
-void join(const Point& p1, const Point& p2, std::vector<Point>& signal, std::vector<double>& dists, double step)
-{
-	Point v(p2 - p1);
-	double vx = v.x;
-	double vy = v.y;
-	double dist(distance(v));
-
-	if (dist > step)
-	{
-		vx /= dist;
-		vy /= dist;
-	}
-
-	double progress(0.0);
-	while (progress + step < dist)
-	{
-		progress += step;
-
-		double x = p1.x + vx * progress;
-		double y = p1.y + vy * progress;
-		
-		signal.emplace_back(x, y);
-		dists.push_back(step);
-	}
-
-	signal.push_back(p2);
-	dists.push_back(dist - progress);
 }
 
 sf::CircleShape getDisc(float radius, float x, float y, const sf::Color& color)
@@ -122,7 +94,23 @@ std::string round(double d, int decimals)
 	return result;
 }
 
+const sf::VertexArray generateVertexArray(const Signal2D& signal)
+{
+	const auto& points(signal.points());
+	const uint32_t signal_samples(points.size());
+	sf::VertexArray va(sf::LinesStrip, signal_samples + 1);
+	if (signal_samples)
+	{
+		for (uint32_t i(0); i < signal_samples; ++i)
+		{
+			const Point& p(points[i]);
 
+			va[i].position = sf::Vector2f(p.x, p.y);
+		}
+		va[signal_samples].position = sf::Vector2f(points[0].x, points[0].y);
+	}
 
+	return va;
+}
 
 
