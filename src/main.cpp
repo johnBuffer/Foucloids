@@ -10,16 +10,15 @@
 int main()
 {
 	const uint32_t win_width = 1600;
-	const uint32_t win_height = 800;
+	const uint32_t win_height = 900;
 
 	sf::ContextSettings settings;
-	settings.antialiasingLevel = 8;
+	settings.antialiasingLevel = 4;
 
 	sf::RenderWindow window(sf::VideoMode(win_width, win_height), "Farmony", sf::Style::Default, settings);
 	sfev::EventManager event_manager(window);
 	const Point window_offset(win_width*0.5f, win_height*0.5f);
-	window.setVerticalSyncEnabled(false);
-	window.setFramerateLimit(60);
+	window.setVerticalSyncEnabled(true);
 
 	Signal2D signal;
 

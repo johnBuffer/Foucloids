@@ -78,7 +78,7 @@ const sf::VertexArray generateVertexArray(const Signal2D& signal)
 
 			va[i].position = sf::Vector2f(float(p.x), float(p.y));
 		}
-		va[signal_samples].position = sf::Vector2f(points[0].x, points[0].y);
+		va[signal_samples].position = toV2f(points[0]);
 	}
 
 	return va;

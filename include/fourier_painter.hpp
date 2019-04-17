@@ -107,12 +107,12 @@ public:
 
 	void addHarmonic()
 	{
-		const uint32_t hc(getHarmonicsCount());
+		const std::size_t hc(getHarmonicsCount());
 		if (!hc)
 		{
 			addCoef(0);
 		} else {
-			int32_t ch(hc);
+			int32_t ch((int32_t)hc);
 			addCoef( ch);
 			addCoef(-ch);
 		}
@@ -123,11 +123,11 @@ public:
 
 	void delHarmonic()
 	{
-		const uint32_t hc(getHarmonicsCount());
+		const std::size_t hc(getHarmonicsCount());
 		if (hc < 2) {
 			m_coefs.clear();
 		} else {
-			int32_t ch(hc - 1);
+			int32_t ch((int32_t)(hc - 1));
 			remove( ch);
 			remove(-ch);
 		}
@@ -157,8 +157,8 @@ public:
 
 	void update()
 	{
-		uint32_t n_points(Consts::TWO_PI / m_dt);
-		float cc(m_coefs.size());
+		uint32_t n_points(static_cast<uint32_t>(Consts::TWO_PI / m_dt));
+		std::size_t cc(m_coefs.size());
 		uint32_t i(0);
 		Point pt(0.0, 0.0);
 		for (ComplexCoef& coef : m_coefs)
@@ -169,13 +169,13 @@ public:
 			cycloid.pos = pt;
 			pt += Point(cycloid.radius * cos(xc), cycloid.radius * sin(xc));
 
-			float ratio(i / cc);
+			float ratio(i / float(cc));
 			CycloidVertexArray& current_cva(coef.cva);
-			current_cva.addOrUpdate(m_current_point, sf::Vertex(sf::Vector2f(pt.x, pt.y), sf::Color(255 * ratio, 128 * ratio, 0)));
+			current_cva.addOrUpdate(m_current_point, sf::Vertex(toV2f(pt), sf::Color(uint8_t(255.0f * ratio), uint8_t(128.0f * ratio), 0)));
 			++i;
 		}
 
-		m_va.addOrUpdate(m_current_point, sf::Vertex(sf::Vector2f(pt.x, pt.y), sf::Color(255, 128, 0)));
+		m_va.addOrUpdate(m_current_point, sf::Vertex(toV2f(pt), sf::Color(255, 128, 0)));
 		m_result = pt;
 
 		advanceTime();
@@ -192,13 +192,13 @@ public:
 		for (const ComplexCoef& coef : m_coefs)
 		{
 			const HarmonicCycloid& cycloid(coef.cycloid);
-			float radius(cycloid.radius);
+			double radius(cycloid.radius);
 
-			arms[i+1].position = sf::Vector2f(cycloid.pos.x, cycloid.pos.y);
+			arms[i+1].position = toV2f(cycloid.pos);
 			arms[i+1].color = arms_color;
 
 			if (draw_arms) {
-				m_target.draw(getCircle(radius, cycloid.pos, 2.0f, sf::Color(100, 100, 100)), rs);
+				m_target.draw(getCircle(float(radius), cycloid.pos, 2.0f, sf::Color(100, 100, 100)), rs);
 				m_target.draw(getDisc(4.0f, cycloid.pos, sf::Color::Yellow), rs);
 			}
 
@@ -260,7 +260,7 @@ private:
 		++m_current_point;
 	}
 
-	uint32_t getHarmonicsCount() const
+	std::size_t getHarmonicsCount() const
 	{
 		std::size_t size(m_coefs.size());
 		if (size < 2) {
