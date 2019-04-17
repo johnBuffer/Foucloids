@@ -2,7 +2,6 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
-#include <dynamic_blur.hpp>
 #include "complex_wave.hpp"
 #include "fourier_painter.hpp"
 #include <event_manager.hpp>
