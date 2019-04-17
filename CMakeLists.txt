@@ -25,6 +25,7 @@ if(WIN32)
 endif()
 
 if(UNIX AND NOT APPLE)
+    set(CMAKE_PREFIX_PATH "/usr/local/")
     find_package(SFML COMPONENTS graphics window system REQUIRED)
     target_include_directories(foucloids PRIVATE "${SFML_INCLUDE_DIR}")
     target_link_libraries(foucloids ${SFML_LIBRARIES})
