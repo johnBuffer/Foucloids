@@ -11,9 +11,9 @@ complex polarToComplex(double r, double o)
 }
 
 // Compute C[n]
-struct ComplexWave
+struct ComplexCoef
 {
-	ComplexWave(const Signal2D& signal, int32_t k_) :
+	ComplexCoef(const Signal2D& signal, int32_t k_) :
 		k(k_)
 	{
 		const std::vector<Point>& signal_points(signal.points());

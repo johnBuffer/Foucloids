@@ -1,90 +1,10 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-#include "complex_wave.hpp"
+#include "complex_coef.hpp"
 #include <vector>
+#include "cycloid.hpp"
 
-
-struct HarmonicCycloid
-{
-	HarmonicCycloid(double radius_, double phi_, int32_t k_, double x = 0.0, double y = 0.0) :
-		radius(radius_),
-		phi(phi_),
-		k(k_),
-		pos(x, y)
-	{}
-
-	double radius;
-	double phi;
-	int32_t k;
-	Point pos;
-};
-
-HarmonicCycloid complexWaveToCycloid(const ComplexWave& w)
-{
-	const complex& c(w.a);
-	double radius(std::abs(c));
-	double phi(std::arg(c));
-
-	return HarmonicCycloid(radius, phi, w.k);
-}
-
-struct CycloidVertexArray
-{
-	CycloidVertexArray(sf::PrimitiveType pt, uint32_t size, uint32_t start) :
-		va(pt, 0),
-		va_size(size),
-		offset(start),
-		ratio(0.0f)
-	{}
-
-	bool canRead()
-	{
-		return va.getVertexCount() == va_size;
-	}
-
-	void clear(uint32_t offset_, uint32_t size)
-	{
-		offset = offset_;
-		va_size = size;
-		va.clear();
-	}
-
-	void addOrUpdate(uint32_t i, const sf::Vertex& v)
-	{
-		if (canRead())
-		{
-			uint32_t index((i - offset) % va_size);
-
-			va[index] = v;
-		}
-		else
-		{
-			va.append(v);
-		}
-	}
-
-	sf::VertexArray va;
-	uint32_t va_size;
-	uint32_t offset;
-	float ratio;
-};
-
-struct ComplexCoef
-{
-	ComplexCoef() :
-		cycloid(0.0, 0.0, 0),
-		cva(sf::LinesStrip, 0, 0)
-	{}
-
-	ComplexCoef(const Signal2D& signal, int32_t k, uint32_t va_size, uint32_t start) :
-		cycloid(complexWaveToCycloid(ComplexWave(signal, k))),
-		cva(sf::LinesStrip, va_size, start)
-	{}
-
-	HarmonicCycloid cycloid;
-	CycloidVertexArray cva;
-};
 
 class FourierPainter
 {
@@ -118,7 +38,7 @@ public:
 			addCoef( ch);
 			addCoef(-ch);
 		}
-		std::sort(m_coefs.begin(), m_coefs.end(), [&](const ComplexCoef& c1, const ComplexCoef& c2) {return c1.cycloid.radius > c2.cycloid.radius; });
+		std::sort(m_coefs.begin(), m_coefs.end(), [&](const GraphicalCycloid& c1, const GraphicalCycloid& c2) {return c1.cycloid.radius() > c2.cycloid.radius(); });
 		update();
 		m_va.clear(m_current_point, getPointCount());
 	}
@@ -146,7 +66,7 @@ public:
 		m_time = 0.0;
 		m_current_point = 0;
 		m_va.clear(m_current_point, getPointCount());
-		for (ComplexCoef& coef : m_coefs)
+		for (GraphicalCycloid& coef : m_coefs)
 		{
 			coef.cva.clear(m_current_point, getPointCount());
 		}
@@ -163,15 +83,15 @@ public:
 		std::size_t cc(m_coefs.size());
 		uint32_t i(0);
 		Point pt(0.0, 0.0);
-		for (ComplexCoef& coef : m_coefs)
+		for (GraphicalCycloid& coef : m_coefs)
 		{
-			HarmonicCycloid& cycloid(coef.cycloid);
-			double xc(cycloid.k * m_time + cycloid.phi);
-			
-			cycloid.pos = pt;
-			pt += Point(cycloid.radius * cos(xc), cycloid.radius * sin(xc));
-
+			Cycloid& cycloid(coef.cycloid);
+			double xc(cycloid.k() * m_time + cycloid.phi());
 			float ratio(i / float(cc));
+			
+			cycloid.position(pt);
+			pt += cycloid.getPoint(xc);
+
 			CycloidVertexArray& current_cva(coef.cva);
 			current_cva.addOrUpdate(m_current_point, sf::Vertex(toV2f(pt), sf::Color(uint8_t(255.0f * ratio), uint8_t(128.0f * ratio), 0)));
 			current_cva.ratio = ratio;
@@ -192,17 +112,16 @@ public:
 		arms[0].color = arms_color;
 
 		uint32_t i(0);
-		for (const ComplexCoef& coef : m_coefs)
+		for (const GraphicalCycloid& coef : m_coefs)
 		{
-			const HarmonicCycloid& cycloid(coef.cycloid);
-			double radius(cycloid.radius);
+			const Cycloid& cycloid(coef.cycloid);
 
-			arms[i+1].position = toV2f(cycloid.pos);
+			arms[i+1].position = toV2f(cycloid.position());
 			arms[i+1].color = arms_color;
 
 			if (draw_arms) {
-				m_target.draw(getCircle(float(radius), cycloid.pos, 2.0f / float(i + 1), sf::Color(100, 100, 100)), rs);
-				m_target.draw(getDisc(8.0f / float(i + 1), cycloid.pos, sf::Color::Yellow), rs);
+				m_target.draw(getCircle(cycloid.radius<float>(), cycloid.position(), 2.0f / float(i + 1), sf::Color(100, 100, 100)), rs);
+				m_target.draw(getDisc(8.0f / float(i + 1), cycloid.position(), sf::Color::Yellow), rs);
 			}
 
 			if (draw_harmonics && coef.cva.ratio > 0.01f) {
@@ -217,7 +136,7 @@ public:
 
 		if (draw_arms) {
 			m_target.draw(arms, rs);
-			m_target.draw(getDisc(2.0f / log(i+1), m_result, sf::Color(255, 128, 0)), rs);
+			m_target.draw(getDisc(2.0f / float(log(i+1)), m_result, sf::Color(255, 128, 0)), rs);
 		}
 
 		m_target.draw(m_va.va, rs);
@@ -239,7 +158,7 @@ private:
 	uint32_t m_harmonics_count;
 	sf::RenderTarget& m_target;
 
-	std::vector<ComplexCoef> m_coefs;
+	std::vector<GraphicalCycloid> m_coefs;
 	const Signal2D& m_signal;
 
 	double m_time;
@@ -279,7 +198,7 @@ private:
 	void remove(int32_t k)
 	{
 		for (uint32_t i(0); i < m_coefs.size(); ++i) {
-			if (m_coefs[i].cycloid.k == k) {
+			if (m_coefs[i].cycloid.k() == k) {
 				m_coefs.erase(m_coefs.begin() + i);
 				return;
 			}

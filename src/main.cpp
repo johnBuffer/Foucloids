@@ -2,14 +2,13 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
-#include "complex_wave.hpp"
 #include "fourier_painter.hpp"
 #include <event_manager.hpp>
-#include "signal2D.hpp"
 #include <dynamic_blur.hpp>
 
 int main()
 {
+	// Initialize window
 	const uint32_t win_width(1600);
 	const uint32_t win_height(900);
 
@@ -26,6 +25,8 @@ int main()
 	Signal2D signal;
 
 	FourierPainter painter(main_renderer, signal);
+	float current_zoom(1.0f);
+	float target_zoom(1.0f);
 	bool slow(false);
 	painter.setDt(0.016);
 	bool draw_signal(true);
@@ -59,15 +60,21 @@ int main()
 			painter.notifySignalChanged();
 		}
 
-		//std::cout << signal.points().size() << std::endl;
+		// Update smooth zoom
+		current_zoom += (target_zoom - current_zoom) * 0.05f;
 
 		// Transforms
 		sf::Transform tf_in;
 		tf_in.translate(win_width * 0.5, win_height * 0.5);
+		tf_in.scale(current_zoom, current_zoom);
 		if (slow)
 		{
-			tf_in.scale(30.0f, 30.0f);
-			tf_in.translate(-painter.getResult().x, -painter.getResult().y);
+			target_zoom = 30.0f;
+			tf_in.translate(-toV2f(painter.getResult()));
+		}
+		else
+		{
+			target_zoom = 1.0f;
 		}
 
 		// Draw

@@ -1,18 +1,13 @@
 #pragma once
 #include <vector>
-#include "point.hpp"
+#include <numeric>
 #include <sstream>
+#include "point.hpp"
 #include "signal2D.hpp"
 
 double sum(const std::vector<double>& in)
 {
-	double sum_vec = 0.0;
-	for (const double& d : in)
-	{
-		sum_vec += d;
-	}
-
-	return sum_vec;
+	return std::accumulate(in.begin(), in.end(), 0.0);
 }
 
 sf::Vector2f toV2f(const Point& p)
@@ -48,16 +43,12 @@ std::string round(double d, int decimals)
 	result = sx.str();
 
 	size_t pos = result.find('.');
-	if (pos == std::string::npos)
+	if (pos == std::string::npos) {
 		return result;
-	else if (!decimals)
-	{
+	} else if (!decimals) {
 		return result.substr(0, pos);
-	}
-	else
-	{
-		if (pos + decimals + 1 < result.size())
-		{
+	} else {
+		if (pos + decimals + 1 < result.size()) {
 			return result.substr(0, pos + decimals + 1);
 		}
 	}
