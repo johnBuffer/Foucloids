@@ -34,7 +34,8 @@ struct CycloidVertexArray
 	CycloidVertexArray(sf::PrimitiveType pt, uint32_t size, uint32_t start) :
 		va(pt, 0),
 		va_size(size),
-		offset(start)
+		offset(start),
+		ratio(0.0f)
 	{}
 
 	bool canRead()
@@ -42,9 +43,10 @@ struct CycloidVertexArray
 		return va.getVertexCount() == va_size;
 	}
 
-	void clear(uint32_t offset_)
+	void clear(uint32_t offset_, uint32_t size)
 	{
 		offset = offset_;
+		va_size = size;
 		va.clear();
 	}
 
@@ -65,6 +67,7 @@ struct CycloidVertexArray
 	sf::VertexArray va;
 	uint32_t va_size;
 	uint32_t offset;
+	float ratio;
 };
 
 struct ComplexCoef
@@ -108,8 +111,7 @@ public:
 	void addHarmonic()
 	{
 		const std::size_t hc(getHarmonicsCount());
-		if (!hc)
-		{
+		if (!hc) {
 			addCoef(0);
 		} else {
 			int32_t ch((int32_t)hc);
@@ -118,7 +120,7 @@ public:
 		}
 		std::sort(m_coefs.begin(), m_coefs.end(), [&](const ComplexCoef& c1, const ComplexCoef& c2) {return c1.cycloid.radius > c2.cycloid.radius; });
 		update();
-		m_va.clear(m_current_point);
+		m_va.clear(m_current_point, getPointCount());
 	}
 
 	void delHarmonic()
@@ -143,10 +145,10 @@ public:
 	{
 		m_time = 0.0;
 		m_current_point = 0;
-		m_va.clear(m_current_point);
+		m_va.clear(m_current_point, getPointCount());
 		for (ComplexCoef& coef : m_coefs)
 		{
-			coef.cva.clear(m_current_point);
+			coef.cva.clear(m_current_point, getPointCount());
 		}
 	}
 
@@ -172,6 +174,7 @@ public:
 			float ratio(i / float(cc));
 			CycloidVertexArray& current_cva(coef.cva);
 			current_cva.addOrUpdate(m_current_point, sf::Vertex(toV2f(pt), sf::Color(uint8_t(255.0f * ratio), uint8_t(128.0f * ratio), 0)));
+			current_cva.ratio = ratio;
 			++i;
 		}
 
@@ -198,11 +201,11 @@ public:
 			arms[i+1].color = arms_color;
 
 			if (draw_arms) {
-				m_target.draw(getCircle(float(radius), cycloid.pos, 2.0f, sf::Color(100, 100, 100)), rs);
-				m_target.draw(getDisc(4.0f, cycloid.pos, sf::Color::Yellow), rs);
+				m_target.draw(getCircle(float(radius), cycloid.pos, 2.0f / float(i + 1), sf::Color(100, 100, 100)), rs);
+				m_target.draw(getDisc(8.0f / float(i + 1), cycloid.pos, sf::Color::Yellow), rs);
 			}
 
-			if (draw_harmonics) {
+			if (draw_harmonics && coef.cva.ratio > 0.01f) {
 				m_target.draw(coef.cva.va, rs);
 			}
 
@@ -212,10 +215,9 @@ public:
 		arms[i+1].position = toV2f(m_result);
 		arms[i+1].color = arms_color;
 
-		if (draw_arms)
-		{
+		if (draw_arms) {
 			m_target.draw(arms, rs);
-			m_target.draw(getDisc(4.0f, m_result, sf::Color(255, 128, 0)), rs);
+			m_target.draw(getDisc(2.0f / log(i+1), m_result, sf::Color(255, 128, 0)), rs);
 		}
 
 		m_target.draw(m_va.va, rs);
