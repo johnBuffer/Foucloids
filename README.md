@@ -7,3 +7,8 @@
  - S : [Toggle] Render input signal
  - D : [Toggle] Render cycoids
  - Space : [Toogle] Slow motion close up
+ 
+ # Images
+ 
+ ![demo_1](https://github.com/johnBuffer/Foucloids/blob/master/img/demo_1.png)
+ ![demo_2](https://github.com/johnBuffer/Foucloids/blob/master/img/demo_2.png)
