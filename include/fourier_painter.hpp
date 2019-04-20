@@ -25,7 +25,13 @@ public:
 	void setDt(double dt)
 	{
 		m_dt = dt;
-		resetTime();
+		m_va.va.clear();
+		m_va.va_size = getPointCount();
+		for (GraphicalCycloid& coef : m_coefs)
+		{
+			coef.cva.va.clear();
+			coef.cva.va_size = getPointCount();
+		}
 	}
 
 	void addHarmonic()

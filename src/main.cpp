@@ -5,6 +5,7 @@
 #include "fourier_painter.hpp"
 #include <event_manager.hpp>
 #include <dynamic_blur.hpp>
+#include "transition.hpp"
 
 int main()
 {
@@ -25,8 +26,10 @@ int main()
 	Signal2D signal;
 
 	FourierPainter painter(main_renderer, signal);
-	float current_zoom(1.0f);
-	float target_zoom(1.0f);
+
+	Transition<float> zoom(1.0f);
+	Transition<Point> focus(0.0f, 0.0f);
+
 	bool slow(false);
 	painter.setDt(0.016);
 	bool draw_signal(true);
@@ -49,6 +52,8 @@ int main()
 	while (window.isOpen())
 	{	
 		painter.update();
+		zoom.update();
+		focus.update();
 
 		current_mouse_pos = sf::Mouse::getPosition(window);
 		event_manager.processEvents();
@@ -60,21 +65,24 @@ int main()
 			painter.notifySignalChanged();
 		}
 
-		// Update smooth zoom
-		current_zoom += (target_zoom - current_zoom) * 0.05f;
-
 		// Transforms
 		sf::Transform tf_in;
 		tf_in.translate(win_width * 0.5, win_height * 0.5);
-		tf_in.scale(current_zoom, current_zoom);
+		tf_in.scale(zoom, zoom);
+		tf_in.translate(-toV2f(focus));
 		if (slow)
 		{
-			target_zoom = 30.0f;
-			tf_in.translate(-toV2f(painter.getResult()));
+			zoom = 30.0f;
+			zoom.speed(0.125f);
+			focus = painter.getResult();
+			focus.speed(5.0f);
 		}
 		else
 		{
-			target_zoom = 1.0f;
+			zoom = 1.0f;
+			zoom.speed(4.0f);
+			focus = Point(0.0f, 0.0f);
+			focus.speed(1.0f);
 		}
 
 		// Draw
