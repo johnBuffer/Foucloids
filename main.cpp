@@ -6,6 +6,15 @@
 #include <dynamic_blur.hpp>
 #include "signal_wave.hpp"
 #include "complex_wave.hpp"
+#include <sstream>
+
+template<typename T>
+std::string numberToString(const T& n)
+{
+	std::stringstream sx;
+	sx << n;
+	return sx.str();
+}
 
 int main()
 {
@@ -18,17 +27,25 @@ int main()
 	std::vector<double> signal_x(win_width);
 	for (uint32_t i(0); i < win_width; ++i)
 	{
-		signal_x[i] = rand() % 25 - 12 + 200*cos(i * 4*PI / double(win_width));
+		signal_x[i] = 0.0;
 	}
 
 	int32_t num_terms(1);
 
 	std::vector<Wave> terms_x;
-
 	uint32_t out_signal_sampling(win_width);
 
 	bool clic = false;
 	sf::Vector2i last_point(0, 0);
+
+	sf::Font font;
+	font.loadFromFile("font.ttf");
+	sf::Text text;
+	text.setFont(font);
+	text.setFillColor(sf::Color::White);
+	text.setCharacterSize(18);
+
+	bool show_result(true);
 
 	while (window.isOpen())
 	{
@@ -58,6 +75,10 @@ int main()
 				else if (event.key.code == sf::Keyboard::E)
 				{
 					num_terms++;
+				}
+				else if (event.key.code == sf::Keyboard::S)
+				{
+					show_result = !show_result;
 				}
 			}
 		}
@@ -116,9 +137,14 @@ int main()
 
 		window.clear();
 
+		text.setString("Harmonics: "+numberToString(num_terms)+"\nA: remove harmonic\nE: add harmonic\nS: show result\nMouse + clic: Edit input signal");
+		text.setPosition(10.0f, 10.0f);
+		window.draw(text);
+
 		window.draw(in_va, tf);
 
-		window.draw(out_va, tf);
+		if (show_result)
+			window.draw(out_va, tf);
 		
 		window.display();
 	}
