@@ -47,13 +47,22 @@ int main()
 	event_manager.addKeyReleasedCallback(sf::Keyboard::S, [&](const sf::Event&) {draw_signal =!draw_signal; });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::Q, [&](const sf::Event&) {painter.draw_harmonics = !painter.draw_harmonics; });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::D, [&](const sf::Event&) {painter.draw_arms = !painter.draw_arms; });
-	event_manager.addKeyReleasedCallback(sf::Keyboard::Space, [&](const sf::Event&) {slow = !slow; if (slow) { painter.setDt(0.0008); } else { painter.setDt(0.016); }});
+	event_manager.addKeyReleasedCallback(sf::Keyboard::Space, [&](const sf::Event&) {slow = !slow; if (slow) {
+		painter.setDt(0.0008);
+		zoom = 30.0f;
+		zoom.setSpeed(0.25f);
+		focus.setSpeed(8.0f);
+	} else { 
+		painter.setDt(0.016);
+		zoom = 1.0f;
+		zoom.setSpeed(1.0f);
+		focus = Point(0.0f, 0.0f);
+		focus.setSpeed(0.5f);
+	}});
 
 	while (window.isOpen())
 	{	
 		painter.update();
-		zoom.update();
-		focus.update();
 
 		current_mouse_pos = sf::Mouse::getPosition(window);
 		event_manager.processEvents();
@@ -70,19 +79,10 @@ int main()
 		tf_in.translate(win_width * 0.5, win_height * 0.5);
 		tf_in.scale(zoom, zoom);
 		tf_in.translate(-toV2f(focus));
+
 		if (slow)
 		{
-			zoom = 30.0f;
-			zoom.speed(0.125f);
 			focus = painter.getResult();
-			focus.speed(5.0f);
-		}
-		else
-		{
-			zoom = 1.0f;
-			zoom.speed(4.0f);
-			focus = Point(0.0f, 0.0f);
-			focus.speed(1.0f);
 		}
 
 		// Draw
