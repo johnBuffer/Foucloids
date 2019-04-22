@@ -1,5 +1,7 @@
-# Usage
+# Release
+[Download release for Windows](https://github.com/johnBuffer/Foucloids/releases)
 
+# Usage
  - A : Adds a new harmonic
  - E : Removes the harmonic with highest frequency
  - R : Reset the input signal
