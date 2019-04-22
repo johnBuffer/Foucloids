@@ -6,6 +6,15 @@
 #include <event_manager.hpp>
 #include <dynamic_blur.hpp>
 #include "transition.hpp"
+#include <sstream>
+
+template<typename T>
+std::string numberToString(const T& n)
+{
+	std::stringstream sx;
+	sx << n;
+	return sx.str();
+}
 
 int main()
 {
@@ -37,6 +46,13 @@ int main()
 	bool clic = false;
 	sf::Vector2i last_point(0, 0), current_mouse_pos(0, 0);
 
+	sf::Font font;
+	font.loadFromFile("font.ttf");
+	sf::Text text;
+	text.setFont(font);
+	text.setFillColor(sf::Color::White);
+	text.setCharacterSize(18);
+
 	// Event intialization
 	event_manager.addEventCallback(sf::Event::Closed, [&](const sf::Event&) {window.close(); });
 	event_manager.addMousePressedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = true; last_point = current_mouse_pos; });
@@ -51,13 +67,13 @@ int main()
 		painter.setDt(0.0008);
 		zoom = 30.0f;
 		zoom.setSpeed(0.25f);
-		focus.setSpeed(8.0f);
+		focus.setSpeed(20.0f);
 	} else { 
 		painter.setDt(0.016);
 		zoom = 1.0f;
 		zoom.setSpeed(1.0f);
 		focus = Point(0.0f, 0.0f);
-		focus.setSpeed(0.5f);
+		focus.setSpeed(1.0f);
 	}});
 
 	while (window.isOpen())
@@ -92,8 +108,14 @@ int main()
 		if (draw_signal)
 			main_renderer.draw(generateVertexArray(signal), tf_in);
 
-		painter.draw(tf_in);
+		painter.draw(tf_in, slow);
 		main_renderer.display();
+
+
+		text.setString("Harmonics: " + numberToString(painter.getHarmonics()) + "\n\nA: remove harmonic\nE: add harmonic\nS: show input signal\nMouse + clic: Edit input signal\nR: clear signal\nQ: show harmonics\nD: show cycloids\nSpace: zoom");
+		text.setPosition(10.0f, 10.0f);
+		main_renderer.draw(text);
+
 		window.draw(sf::Sprite(main_renderer.getTexture()));
 		window.draw(sf::Sprite(blur.apply(main_renderer.getTexture(), 1)), sf::BlendAdd);
 

@@ -4,7 +4,7 @@
 #include "complex_coef.hpp"
 #include <vector>
 #include "cycloid.hpp"
-
+#include <iostream>
 
 class FourierPainter
 {
@@ -25,12 +25,11 @@ public:
 	void setDt(double dt)
 	{
 		m_dt = dt;
-		m_va.va.clear();
-		m_va.va_size = getPointCount();
+		const uint32_t point_count(getPointCount());
+		m_va.clear(m_current_point, point_count);
 		for (GraphicalCycloid& coef : m_coefs)
 		{
-			coef.cva.va.clear();
-			coef.cva.va_size = getPointCount();
+			coef.cva.clear(m_current_point, point_count);
 		}
 	}
 
@@ -78,6 +77,11 @@ public:
 		}
 	}
 
+	uint32_t getHarmonics() const
+	{
+		return getHarmonicsCount();
+	}
+
 	void notifySignalChanged()
 	{
 		clear();
@@ -110,7 +114,7 @@ public:
 		advanceTime();
 	}
 
-	void draw(const sf::RenderStates& rs) const
+	void draw(const sf::RenderStates& rs, bool zoom) const
 	{
 		const sf::Color arms_color(255, 200, 75);
 		sf::VertexArray arms(sf::LinesStrip, m_coefs.size() + 2);
@@ -126,8 +130,9 @@ public:
 			arms[i+1].color = arms_color;
 
 			if (draw_arms) {
-				m_target.draw(getCircle(cycloid.radius<float>(), cycloid.position(), 2.0f / float(i + 1), sf::Color(100, 100, 100)), rs);
-				m_target.draw(getDisc(8.0f / float(i + 1), cycloid.position(), sf::Color::Yellow), rs);
+				float r = zoom ? 0.0f : 1.0f;
+				m_target.draw(getCircle(cycloid.radius<float>(), cycloid.position(), r + 2.0f / float(i + 1), sf::Color(100, 100, 100)), rs);
+				m_target.draw(getDisc((7.0f + r) / float(i + 1), cycloid.position(), sf::Color::Yellow), rs);
 			}
 
 			if (draw_harmonics && coef.cva.ratio > 0.01f) {

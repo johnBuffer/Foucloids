@@ -76,8 +76,13 @@ struct CycloidVertexArray
 	void clear(uint32_t offset_, uint32_t size)
 	{
 		offset = offset_;
+		clearVa(size);
+	}
+
+	void clearVa(uint32_t size)
+	{
 		va_size = size;
-		va.clear();
+		va.resize(0);
 	}
 
 	void addOrUpdate(uint32_t i, const sf::Vertex& v)
