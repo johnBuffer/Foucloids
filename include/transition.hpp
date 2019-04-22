@@ -69,7 +69,7 @@ private:
 	void autoUpdate()
 	{
 		ChronoPoint now(std::chrono::steady_clock::now());
-		double t(static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(now - m_start_time).count()));
+		float t(static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(now - m_start_time).count()));
 		m_current_value = m_start_value + ratio(t * 0.001f * m_speed) * m_delta;
 	}
 };

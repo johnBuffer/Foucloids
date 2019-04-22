@@ -77,7 +77,7 @@ public:
 		}
 	}
 
-	uint32_t getHarmonics() const
+	std::size_t getHarmonics() const
 	{
 		return getHarmonicsCount();
 	}
