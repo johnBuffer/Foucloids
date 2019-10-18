@@ -13,29 +13,32 @@ class Transition
 public:
 	using ChronoPoint = std::chrono::steady_clock::time_point;
 
-	Transition() :
-		m_start_value(),
-		m_current_value(),
-		m_target_value(),
-		m_start_time(std::chrono::steady_clock::now()),
-		m_speed(0.0f)
+	Transition()
+		: m_start_value()
+		, m_current_value()
+		, m_target_value()
+		, m_start_time(std::chrono::steady_clock::now())
+		, m_speed(0.0f)
+		, m_delta(m_target_value - m_start_value)
 	{}
 
-	Transition(const T& value, float speed=1.0f) :
-		m_start_value(value),
-		m_current_value(value),
-		m_target_value(value),
-		m_start_time(std::chrono::steady_clock::now()),
-		m_speed(speed)
+	Transition(const T& value, float speed=1.0f)
+		: m_start_value(value),
+		, m_current_value(value),
+		, m_target_value(value),
+		, m_start_time(std::chrono::steady_clock::now()),
+		, m_speed(speed)
+		, m_delta(m_target_value - m_start_value)
 	{}
 
 	template<typename... Args>
-	explicit Transition(Args&&... args) :
-		m_start_value(std::forward<Args>(args)...),
-		m_current_value(m_start_value),
-		m_target_value(m_start_value),
-		m_start_time(std::chrono::steady_clock::now()),
-		m_speed(1.0f)
+	explicit Transition(Args&&... args)
+		: m_start_value(std::forward<Args>(args)...)
+		, m_current_value(m_start_value)
+		, m_target_value(m_start_value)
+		, m_start_time(std::chrono::steady_clock::now())
+		, m_speed(1.0f)
+		, m_delta(m_target_value - m_start_value)
 	{}
 
 	operator const T&()

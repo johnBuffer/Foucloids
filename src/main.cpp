@@ -35,7 +35,6 @@ int main()
 	Signal2D signal;
 
 	FourierPainter painter(main_renderer, signal);
-
 	Transition<float> zoom(1.0f);
 	Transition<Point> focus(0.0f, 0.0f);
 
@@ -65,13 +64,13 @@ int main()
 	event_manager.addKeyReleasedCallback(sf::Keyboard::D, [&](const sf::Event&) {painter.draw_arms = !painter.draw_arms; });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::Space, [&](const sf::Event&) {slow = !slow; if (slow) {
 		painter.setDt(0.0008);
-		zoom = 30.0f;
+		zoom = 5.0f;
 		zoom.setSpeed(0.25f);
-		focus.setSpeed(20.0f);
+		focus.setSpeed(2.0f);
 	} else { 
 		painter.setDt(0.016);
 		zoom = 1.0f;
-		zoom.setSpeed(1.0f);
+		//zoom.setSpeed(1.0f);
 		focus = Point(0.0f, 0.0f);
 		focus.setSpeed(1.0f);
 	}});
