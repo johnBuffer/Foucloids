@@ -56,8 +56,8 @@ int main()
 	event_manager.addEventCallback(sf::Event::Closed, [&](const sf::Event&) {window.close(); });
 	event_manager.addMousePressedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = true; last_point = current_mouse_pos; });
 	event_manager.addMouseReleasedCallback(sf::Mouse::Left, [&](const sf::Event&) {clic = false; signal.close(1.0);});
-	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {painter.delHarmonic(); });
-	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {painter.addHarmonic();});
+	event_manager.addKeyReleasedCallback(sf::Keyboard::A, [&](const sf::Event&) {painter.addHarmonic(); });
+	event_manager.addKeyReleasedCallback(sf::Keyboard::E, [&](const sf::Event&) {painter.delHarmonic(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::R, [&](const sf::Event&) {signal.clear(); painter.clear(); });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::S, [&](const sf::Event&) {draw_signal =!draw_signal; });
 	event_manager.addKeyReleasedCallback(sf::Keyboard::Q, [&](const sf::Event&) {painter.draw_harmonics = !painter.draw_harmonics; });
@@ -104,14 +104,14 @@ int main()
 		window.clear();
 		main_renderer.clear();
 
-		if (draw_signal)
+		if (draw_signal) {
 			main_renderer.draw(generateVertexArray(signal), tf_in);
-
+		}
 		painter.draw(tf_in, slow);
 		main_renderer.display();
 
 
-		text.setString("Harmonics: " + numberToString(painter.getHarmonics()) + "\n\nA: remove harmonic\nE: add harmonic\nS: show input signal\nMouse + clic: Edit input signal\nR: clear signal\nQ: show harmonics\nD: show cycloids\nSpace: zoom");
+		text.setString("Harmonics: " + numberToString(painter.getHarmonics()) + "\n\nA: add harmonic\nE: remove harmonic\nS: show input signal\nMouse + clic: Edit input signal\nR: clear signal\nQ: show harmonics\nD: show cycloids\nSpace: zoom");
 		text.setPosition(10.0f, 10.0f);
 		main_renderer.draw(text);
 
