@@ -2,8 +2,9 @@
 
 #include <vector>
 #include "point.hpp"
-#include "integral.hpp"
 #include "signal2D.hpp"
+#include "utils.hpp"
+
 
 complex polarToComplex(double r, double o)
 {
@@ -24,8 +25,7 @@ struct ComplexCoef
 		const double scale_factor = Consts::TWO_PI / sum(signal_dists);
 
 		double t(0.0);
-		for (std::size_t i(0); i < size; ++i)
-		{
+		for (std::size_t i(0); i < size; ++i) {
 			processed[i] = complex(signal_points[i]) * polarToComplex(1.0, -((t*scale_factor - Consts::PI)*k));
 			t += signal_dists[i];
 		}

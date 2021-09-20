@@ -5,13 +5,14 @@
 #include <vector>
 #include "cycloid.hpp"
 #include <iostream>
+#include "window_context_handler.hpp"
+
 
 class FourierPainter
 {
 public:
-	FourierPainter(sf::RenderTarget& target, const Signal2D& signal) :
+	FourierPainter(const Signal2D& signal) :
 		m_harmonics_count(0),
-		m_target(target),
 		m_signal(signal),
 		draw_harmonics(true),
 		draw_arms(true),
@@ -114,7 +115,7 @@ public:
 		advanceTime();
 	}
 
-	void draw(const sf::RenderStates& rs, bool zoom) const
+	void draw(RenderContext& context, bool zoom) const
 	{
 		const sf::Color arms_color(255, 200, 75);
 		sf::VertexArray arms(sf::LinesStrip, m_coefs.size() + 2);
@@ -131,12 +132,12 @@ public:
 
 			if (draw_arms) {
 				float r = zoom ? 0.0f : 1.0f;
-				m_target.draw(getCircle(cycloid.radius<float>(), cycloid.position(), r + 2.0f / float(i + 1), sf::Color(100, 100, 100)), rs);
-				m_target.draw(getDisc((7.0f + r) / float(i + 1), cycloid.position(), sf::Color::Yellow), rs);
+				context.draw(getCircle(cycloid.radius<float>(), cycloid.position(), r + 2.0f / float(i + 1), sf::Color(100, 100, 100)));
+				context.draw(getDisc((7.0f + r) / float(i + 1), cycloid.position(), sf::Color::Yellow));
 			}
 
 			if (draw_harmonics && coef.cva.ratio > 0.01f) {
-				m_target.draw(coef.cva.va, rs);
+				context.draw(coef.cva.va);
 			}
 
 			++i;
@@ -146,11 +147,11 @@ public:
 		arms[i+1].color = arms_color;
 
 		if (draw_arms) {
-			m_target.draw(arms, rs);
-			m_target.draw(getDisc(2.0f / float(log(i+1)), m_result, sf::Color(255, 128, 0)), rs);
+			context.draw(arms);
+			context.draw(getDisc(2.0f / float(log(i+1)), m_result, sf::Color(255, 128, 0)));
 		}
 
-		m_target.draw(m_va.va, rs);
+		context.draw(m_va.va);
 	}
 
 	const Point& getResult() const
@@ -167,7 +168,6 @@ public:
 
 private:
 	uint32_t m_harmonics_count;
-	sf::RenderTarget& m_target;
 
 	std::vector<GraphicalCycloid> m_coefs;
 	const Signal2D& m_signal;

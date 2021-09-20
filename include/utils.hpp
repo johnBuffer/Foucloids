@@ -1,9 +1,27 @@
 #pragma once
 #include <vector>
 #include <numeric>
+#include <complex>
 #include <sstream>
 #include "point.hpp"
 #include "signal2D.hpp"
+#include "consts.hpp"
+
+
+using complex = std::complex<double>;
+
+
+template<typename U, typename T>
+U to(const T& v)
+{
+    return static_cast<U>(v);
+}
+
+template<typename T>
+sf::Vector2f toVector2f(sf::Vector2<T> v)
+{
+    return {to<float>(v.x), to<float>(v.y)};
+}
 
 double sum(const std::vector<double>& in)
 {
@@ -35,7 +53,8 @@ sf::CircleShape getCircle(float radius, const Point& p, float thickness, const s
 	return circle;
 }
 
-std::string round(double d, int decimals)
+template<typename T>
+std::string toString(T d, int decimals = 2)
 {
 	std::string result;
 	std::stringstream sx;
@@ -75,4 +94,18 @@ const sf::VertexArray generateVertexArray(const Signal2D& signal)
 	return va;
 }
 
+complex computeIntegral(const std::vector<complex>& signal, const std::vector<double>& distances)
+{
+	const double fact = Consts::TWO_PI / sum(distances);
+
+	uint32_t i(0);
+	complex integral(0.0);
+	for (const complex c : signal)
+	{
+		integral += c * distances[i];
+		++i;
+	}
+
+	return fact * integral;
+}
 

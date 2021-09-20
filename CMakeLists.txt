@@ -1,23 +1,40 @@
-cmake_minimum_required(VERSION 3.5)
-project(Foucloids VERSION 1.0.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.10)
+set(PROJECT_NAME Foucloids)
+project(${PROJECT_NAME} VERSION 1.0.0 LANGUAGES CXX)
 
-set(SFML_DIR "" CACHE PATH "SFML lib path")
-set(SFML_LIB_DIR "${SFML_DIR}/lib")
-set(SFML_INC_DIR "${SFML_DIR}/include")
 
-find_package(OpenGL)
-
-set(SFML_LIBS "${SFML_LIB_DIR}/sfml-graphics-s.lib"
-    "${SFML_LIB_DIR}/sfml-window-s.lib"
-    "${SFML_LIB_DIR}/sfml-system-s.lib"
-    "${SFML_LIB_DIR}/freetype.lib"
-    "${OPENGL_LIBRARIES}"
-    "winmm.lib"
+file(GLOB_RECURSE source_files
+    "src/*.cpp"
+    "include/*.hpp"
+    "include/*.cpp"
 )
 
-set(SOURCES "src/main.cpp")
+set(SOURCES ${source_files})
 
-add_executable(foucloids ${SOURCES})
-add_definitions(-DSFML_STATIC)
-target_include_directories(foucloids PRIVATE "${SFML_INC_DIR}" "include")
-target_link_libraries(foucloids ${SFML_LIBS})
+# Detect and add SFML
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
+find_package(SFML 2 REQUIRED COMPONENTS network audio graphics window system)
+
+# Set build type
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif(NOT CMAKE_BUILD_TYPE)
+
+add_executable(${PROJECT_NAME} ${WIN32_GUI} ${SOURCES})
+target_include_directories(${PROJECT_NAME} PRIVATE "include" "lib")
+set(SFML_LIBS sfml-system sfml-window sfml-graphics)
+target_link_libraries(${PROJECT_NAME} ${SFML_LIBS})
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+if (UNIX)
+   target_link_libraries(${PROJECT_NAME} pthread)
+endif (UNIX)
+
+# Copy res dir to the binary directory
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/res DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+if(MSVC)
+   foreach(lib ${SFML_LIBS})
+      get_target_property(lib_path ${lib} LOCATION)
+      file(COPY ${lib_path} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+   endforeach()
+endif(MSVC)
